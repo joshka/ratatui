@@ -3,9 +3,9 @@ use std::io;
 use crate::buffer::Cell;
 use crate::layout::Rect;
 
-#[cfg(feature = "termion")]
+#[cfg(all(feature = "termion", not(target_os = "windows")))]
 mod termion;
-#[cfg(feature = "termion")]
+#[cfg(all(feature = "termion", not(target_os = "windows")))]
 pub use self::termion::TermionBackend;
 
 #[cfg(feature = "crossterm")]
