@@ -1,14 +1,16 @@
 mod app;
-#[cfg(feature = "crossterm")]
-mod crossterm;
-#[cfg(feature = "termion")]
-mod termion;
 mod ui;
 
-#[cfg(feature = "crossterm")]
-use crate::crossterm::run;
-#[cfg(feature = "termion")]
-use crate::termion::run;
+cfg_if::cfg_if!(
+    if #[cfg(feature = "crossterm")] {
+        mod crossterm;
+        use crate::crossterm::run;
+    } else if #[cfg(feature = "termion")] {
+        mod termion;
+        use crate::termion::run;
+    }
+);
+
 use argh::FromArgs;
 use std::{error::Error, time::Duration};
 
