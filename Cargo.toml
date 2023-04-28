@@ -37,9 +37,15 @@ time = { version = "0.3.11", optional = true, features = ["local-offset"]}
 
 [dev-dependencies]
 rand = "0.8"
-argh = "0.1"
+argh = "0.1.1"
 cfg-if = "1.0"
 indoc = "2.0"
+
+# the following dependencies are necessary as the downstream dependencies of
+# the above deps actually need later versions than specified.
+
+# required as argh_derive needs path.get_ident() which was introduced in 1.0.3
+syn = "1.0.3"
 
 [[example]]
 name = "barchart"
