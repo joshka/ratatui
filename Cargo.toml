@@ -149,6 +149,11 @@ name = "demo"
 doc-scrape-examples = false
 
 [[example]]
+name = "demo2"
+# this runs for all of the terminal backends, so it can't be built using --all-features or scraped
+doc-scrape-examples = false
+
+[[example]]
 name = "gauge"
 required-features = ["crossterm"]
 doc-scrape-examples = true
