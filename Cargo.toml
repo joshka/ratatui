@@ -47,14 +47,16 @@ document-features = { version = "0.2.7", optional = true }
 
 [dev-dependencies]
 anyhow = "1.0.71"
-argh = "0.1"
+argh = "0.1.12"
 better-panic = "0.3.0"
 cargo-husky = { version = "1.5.0", default-features = false, features = [
   "user-hooks",
 ] }
-criterion = { version = "0.5", features = ["html_reports"] }
+criterion = { version = "0.5.1", features = ["html_reports"] }
 fakeit = "1.1"
-rand = "0.8"
+lipsum = "0.9.0"
+rand = "0.8.5"
+palette = "0.7.3"
 pretty_assertions = "1.4.0"
 
 [features]
@@ -145,6 +147,12 @@ doc-scrape-examples = true
 
 [[example]]
 name = "demo"
+# this runs for all of the terminal backends, so it can't be built using --all-features or scraped
+doc-scrape-examples = false
+
+[[example]]
+name = "demo2"
+required-features = ["crossterm"]
 # this runs for all of the terminal backends, so it can't be built using --all-features or scraped
 doc-scrape-examples = false
 
