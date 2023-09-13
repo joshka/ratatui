@@ -12,10 +12,13 @@ Type "cargo run --example demo2"
 Enter
 Sleep 2s
 Show
-Sleep 3s
-Down@0.25s 10
 Sleep 1s
+Down@0.5s 8
 Right
 Sleep 1s
+Down@0.5s 8
+Right
+Sleep 1s
+Down@0.5s 8
 Right
 Sleep 2s
