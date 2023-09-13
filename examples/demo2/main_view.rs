@@ -28,7 +28,7 @@ impl Widget for MainView {
 impl MainView {
     fn render_title_bar(&self, area: Rect, buf: &mut Buffer) {
         let areas = layout(area, Direction::Horizontal, vec![15, 0]);
-        Paragraph::new("Ratatui")
+        Paragraph::new("Ratatui v0.23.0")
             .italic()
             .bold()
             .white()
@@ -42,7 +42,7 @@ impl MainView {
     }
 
     fn render_bottom_bar(&self, area: Rect, buf: &mut Buffer) {
-        let key_style = Style::new().bold().white().on_blue();
+        let key_style = Style::new().bold().white().on_light_blue();
         Paragraph::new(Line::from(vec![
             // █ characters here are a hack around the VHS bug that swallows style resets for
             // whitespace characters
@@ -58,7 +58,7 @@ impl MainView {
             "↓".set_style(key_style),
             "█ Next Row".into(),
         ]))
-        .blue()
+        .light_blue()
         .on_black()
         .render(area, buf);
     }
@@ -70,7 +70,7 @@ impl MainView {
 
     fn render_tab2(&self, area: Rect, buf: &mut Buffer) {
         let areas = layout(area, Direction::Vertical, vec![6, 2, 0]);
-        colors::render(areas[0], buf);
+        colors::render(self.selected_row, areas[0], buf);
         modifiers::render(areas[1], buf);
         text::render(self.selected_row, areas[2], buf);
     }

@@ -1,5 +1,6 @@
-use crate::main_view::{layout, render_title};
 use ratatui::{prelude::*, widgets::*};
+
+use crate::main_view::{layout, render_title};
 
 pub fn render(progress: usize, area: Rect, buf: &mut Buffer) {
     let areas = layout(area, Direction::Vertical, vec![1, 0]);

@@ -6,19 +6,19 @@ Set Theme "OceanicMaterial"
 Set Width 1280
 Set Height 640
 Set Padding 80
-Set PlaybackSpeed 0.5
 Hide
 Type "cargo run --example demo2"
 Enter
+Set TypingSpeed 200ms
 Sleep 2s
 Show
-Sleep 1s
-Down@0.5s 8
-Right
-Sleep 1s
-Down@0.5s 8
-Right
-Sleep 1s
-Down@0.5s 8
+Sleep 2s
+Down 10
 Right
 Sleep 2s
+Down 20
+Right
+Sleep 2s
+Down@50ms 80
+Right
+Sleep 3s

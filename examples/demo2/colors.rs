@@ -1,18 +1,24 @@
-use crate::main_view::{layout, render_title};
 use palette::{
     convert::{FromColorUnclamped, IntoColorUnclamped},
     Okhsv, Srgb,
 };
 use ratatui::{prelude::*, widgets::*};
 
-pub fn render(area: Rect, buf: &mut Buffer) {
+use crate::main_view::{layout, render_title};
+
+pub fn render(rotate: usize, area: Rect, buf: &mut Buffer) {
     let areas = layout(area, Direction::Vertical, vec![1, 0]);
     let top_areas = layout(areas[1], Direction::Horizontal, vec![8, 1, 36, 1, 0]);
 
     render_title("Colors", areas[0], buf);
     render_16_colors(top_areas[0], buf);
     render_256_colors(top_areas[2], buf);
-    render_rgb_colors(top_areas[4], buf);
+    let vhs_bug_fix = Text::from(vec![Line::from("█"); 5]);
+    Paragraph::new(vhs_bug_fix)
+        .fg(Color::Reset)
+        .reversed()
+        .render(top_areas[3], buf);
+    render_rgb_colors(rotate, top_areas[4], buf);
 }
 
 fn render_16_colors(area: Rect, buf: &mut Buffer) {
@@ -53,13 +59,13 @@ fn render_256_colors(area: Rect, buf: &mut Buffer) {
     }
 }
 
-fn render_rgb_colors(area: Rect, buf: &mut Buffer) {
+fn render_rgb_colors(rotate: usize, area: Rect, buf: &mut Buffer) {
     let layout = layout(area, Direction::Vertical, vec![1, 0]);
     Paragraph::new("24bit RGB (Truecolor)").render(layout[0], buf);
     let area = layout[1];
     for (xi, x) in (area.left()..area.right()).enumerate() {
         for (yi, y) in (area.top()..area.bottom()).enumerate() {
-            let hue = xi as f32 * 360.0 / area.width as f32;
+            let hue = xi as f32 * 360.0 / area.width as f32 + rotate as f32 * 10.0;
             let value_fg = (yi as f32 + 0.5) / (area.height as f32);
             let value_bg = (yi as f32 + 1.0) / (area.height as f32);
             let fg = Okhsv::<f32>::new(hue, Okhsv::max_saturation(), value_fg);

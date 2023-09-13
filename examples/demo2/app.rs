@@ -1,14 +1,16 @@
-use crate::{main_view::MainView, *};
+use std::{
+    io::{self, stdout, Stdout},
+    time::Duration,
+};
+
 use crossterm::{
     event::{self, KeyEventKind},
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
     ExecutableCommand,
 };
 use ratatui::prelude::*;
-use std::{
-    io::{self, stdout, Stdout},
-    time::Duration,
-};
+
+use crate::{main_view::MainView, *};
 
 pub struct App {
     terminal: Terminal<CrosstermBackend<Stdout>>,

@@ -1,5 +1,6 @@
-use crate::main_view::{layout, render_title};
 use ratatui::{prelude::*, widgets::*};
+
+use crate::main_view::{layout, render_title};
 
 pub fn render(selected_row: usize, area: Rect, buf: &mut Buffer) {
     let layout = layout(area, Direction::Vertical, vec![1, 0]);
