@@ -3,7 +3,13 @@ use ratatui::{prelude::*, widgets::*};
 use crate::main_view::layout;
 
 pub fn render(progress: usize, area: Rect, buf: &mut Buffer) {
-    let area = layout(area, Direction::Vertical, vec![1, 1, 1, 1, 0]);
+    let block = Block::new()
+        .title("Gauges")
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded);
+    let inner = block.inner(area);
+    block.render(area, buf);
+    let area = layout(inner, Direction::Vertical, vec![1, 1, 1, 1, 0]);
 
     let percent = (progress * 2 + 20).min(100) as f64;
     let progress_label = if percent < 100.0 {

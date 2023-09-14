@@ -15,8 +15,6 @@ pub fn render(area: Rect, buf: &mut Buffer) {
 }
 
 fn render_16_colors(area: Rect, buf: &mut Buffer) {
-    let areas = layout(area, Direction::Vertical, vec![1, 0]);
-    Paragraph::new("16 color").render(areas[0], buf);
     let sym = "██";
     Paragraph::new(vec![
         Line::from(vec![sym.black(), sym.red(), sym.green(), sym.yellow()]),
@@ -34,13 +32,10 @@ fn render_16_colors(area: Rect, buf: &mut Buffer) {
             sym.white(),
         ]),
     ])
-    .render(areas[1], buf);
+    .render(area, buf);
 }
 
 fn render_256_colors(area: Rect, buf: &mut Buffer) {
-    let layout = layout(area, Direction::Vertical, vec![1, 0]);
-    Paragraph::new("256 colors (Indexed RGB)").render(layout[0], buf);
-    let area = layout[1];
     for (xi, x) in (16..52).zip(area.left()..area.right()) {
         for (yi, y) in (0..3).zip(area.top()..area.bottom()) {
             let fg = Color::Indexed(yi * 72 + xi);
@@ -52,15 +47,13 @@ fn render_256_colors(area: Rect, buf: &mut Buffer) {
     }
 }
 
-fn render_rgb_colors(area: Rect, buf: &mut Buffer) {
-    let layout = layout(area, Direction::Vertical, vec![1, 0]);
-    Paragraph::new("24bit RGB (Truecolor)").render(layout[0], buf);
-    let area = layout[1];
+pub fn render_rgb_colors(area: Rect, buf: &mut Buffer) {
     for (xi, x) in (area.left()..area.right()).enumerate() {
         for (yi, y) in (area.top()..area.bottom()).enumerate() {
+            let yi = area.height as usize - yi - 1;
             let hue = xi as f32 * 360.0 / area.width as f32;
+            let value_bg = (yi as f32 - 0.0) / (area.height as f32);
             let value_fg = (yi as f32 + 0.5) / (area.height as f32);
-            let value_bg = (yi as f32 + 1.0) / (area.height as f32);
             let fg = Okhsv::<f32>::new(hue, Okhsv::max_saturation(), value_fg);
             let fg: Srgb<f32> = fg.into_color_unclamped();
             let fg: Srgb<u8> = fg.into_format();

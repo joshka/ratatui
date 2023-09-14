@@ -14,22 +14,24 @@ pub fn render(scroll: usize, area: Rect, buf: &mut Buffer) {
     render_paragraph(Alignment::Right, Color::LightBlue, scroll, area[2], buf);
 }
 
-fn render_paragraph(
+pub fn render_paragraph(
     alignment: Alignment,
     color: Color,
     scroll: usize,
     area: Rect,
     buf: &mut Buffer,
 ) {
+    Clear.render(area, buf);
     let block = Block::new()
-        .title(format!("{} Paragraph", alignment))
+        .title(format!("{} aligned", alignment))
         .title_alignment(alignment)
         .border_type(BorderType::Rounded)
         .borders(Borders::ALL)
-        .padding(Padding::new(0, 1, 0, 0)); // for scrollbar
+        .border_style(Style::new().fg(color))
+        .padding(Padding::new(1, 1, 0, 0)); // for scrollbar
     let offset = (scroll as u16, 0);
     Paragraph::new(lipsum::lipsum(40))
-        .style(Style::new().fg(color))
+        .style(Style::new().fg(Color::Gray).bg(Color::Rgb(16, 24, 48)))
         .alignment(alignment)
         .block(block)
         .wrap(Wrap { trim: true })

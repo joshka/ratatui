@@ -12,6 +12,7 @@ pub struct MainView {
 
 impl Widget for MainView {
     fn render(self, area: Rect, buf: &mut Buffer) {
+        Block::new().bg(Color::Indexed(233)).render(area, buf);
         let area = layout(area, Direction::Vertical, vec![1, 0, 1]);
         self.render_title_bar(area[0], buf);
         match self.selected_tab {
@@ -30,7 +31,13 @@ impl Widget for MainView {
 impl MainView {
     fn render_title_bar(&self, area: Rect, buf: &mut Buffer) {
         let area = layout(area, Direction::Horizontal, vec![17, 0]);
-        Paragraph::new("Ratatui v0.23.0 ".italic().bold().white().on_red()).render(area[0], buf);
+        Paragraph::new(
+            "Ratatui v0.23.0 "
+                .bold()
+                .fg(Color::Indexed(252))
+                .bg(Color::Indexed(232)),
+        )
+        .render(area[0], buf);
 
         Tabs::new(vec![
             "Recipe",
@@ -40,14 +47,14 @@ impl MainView {
             "Email",
             "Traceroute",
         ])
-        .style(Style::new().blue())
-        .highlight_style(Style::new().bold().underlined().light_blue())
+        .style(Style::new().fg(Color::Indexed(244)).bg(Color::Indexed(232)))
+        .highlight_style(Style::new().bold().fg(Color::Rgb(64, 96, 192)))
         .select(self.selected_tab)
         .render(area[1], buf);
     }
 
     fn render_bottom_bar(&self, area: Rect, buf: &mut Buffer) {
-        let key_style = Style::new().black().on_dark_gray().not_dim();
+        let key_style = Style::new().fg(Color::Indexed(232)).bg(Color::Indexed(244));
         Paragraph::new(Line::from(vec![
             " Q ".set_style(key_style),
             " Quit ".into(),
@@ -60,13 +67,46 @@ impl MainView {
             " ↓/j ".set_style(key_style),
             " Next Row".into(),
         ]))
-        .dim()
+        .fg(Color::Indexed(244))
+        .bg(Color::Indexed(232))
         .render(area, buf);
     }
 
     fn render_tab1(&self, area: Rect, buf: &mut Buffer) {
-        let area = layout(area, Direction::Vertical, vec![0]);
-        recipe::render(self.selected_row, area[0], buf);
+        colors::render_rgb_colors(area, buf);
+        let area = area.inner(&Margin {
+            vertical: 1,
+            horizontal: 2,
+        });
+        let area = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(vec![Constraint::Ratio(1, 3); 3])
+            .split(area);
+        let margin = Margin {
+            vertical: 1,
+            horizontal: 2,
+        };
+        text::render_paragraph(
+            Alignment::Left,
+            Color::LightRed,
+            0,
+            area[0].inner(&margin),
+            buf,
+        );
+        text::render_paragraph(
+            Alignment::Center,
+            Color::LightGreen,
+            0,
+            area[1].inner(&margin),
+            buf,
+        );
+        text::render_paragraph(
+            Alignment::Right,
+            Color::LightBlue,
+            0,
+            area[2].inner(&margin),
+            buf,
+        );
     }
 
     fn render_tab2(&self, area: Rect, buf: &mut Buffer) {
@@ -77,9 +117,16 @@ impl MainView {
     }
 
     fn render_tab3(&self, area: Rect, buf: &mut Buffer) {
-        let area = layout(area, Direction::Vertical, vec![4, 0]);
-        gauges::render(self.selected_row, area[0], buf);
-        bars::render(area[1], buf);
+        colors::render_rgb_colors(area, buf);
+        let area = area.inner(&Margin {
+            vertical: 1,
+            horizontal: 2,
+        });
+        let area = layout(area, Direction::Vertical, vec![0, 6]);
+        Clear.render(area[0], buf);
+        Clear.render(area[1], buf);
+        bars::render(area[0], buf);
+        gauges::render(self.selected_row, area[1], buf);
     }
 
     fn render_tab4(&self, area: Rect, buf: &mut Buffer) {

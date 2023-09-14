@@ -75,6 +75,7 @@ fn render_horizontal_barchart(area: Rect, buf: &mut Buffer) {
         .direction(Direction::Horizontal)
         .block(block)
         .data(group)
+        .bar_gap(0)
         .value_style(
             Style::default()
                 .fg(Color::Black)
