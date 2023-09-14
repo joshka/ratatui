@@ -22,7 +22,7 @@ pub fn render(area: Rect, buf: &mut Buffer) {
         .style(Style::new().fg(Color::Red))
         .graph_type(GraphType::Line)
         .data(&data[..])];
-    let chart = Chart::new(datasets)
+    Chart::new(datasets)
         .x_axis(Axis::default().title("x").bounds([-4.0, 4.0]).labels(vec![
             "-4.0".into(),
             "0".into(),
@@ -33,6 +33,5 @@ pub fn render(area: Rect, buf: &mut Buffer) {
             "0".into(),
             "8".into(),
         ]))
-        .style(Style::new().on_black());
-    chart.render(layout[1], buf);
+        .render(layout[1], buf);
 }

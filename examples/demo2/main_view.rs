@@ -12,7 +12,6 @@ pub struct MainView {
 
 impl Widget for MainView {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        Block::new().on_black().render(area, buf);
         let area = layout(area, Direction::Vertical, vec![1, 0, 1]);
         self.render_title_bar(area[0], buf);
         match self.selected_tab {
@@ -61,7 +60,6 @@ impl MainView {
             " ↓/j ".set_style(key_style),
             " Next Row".into(),
         ]))
-        .on_black()
         .dim()
         .render(area, buf);
     }
