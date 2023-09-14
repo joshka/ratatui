@@ -83,7 +83,7 @@ impl App {
                 self.selected_row = 0;
             }
             event::KeyCode::Right | event::KeyCode::Char('l') => {
-                self.selected_tab = self.selected_tab.saturating_add(1).min(5);
+                self.selected_tab = self.selected_tab.saturating_add(1).min(4);
                 self.selected_row = 0;
             }
             event::KeyCode::Up | event::KeyCode::Char('k') => {

@@ -21,7 +21,7 @@ pub fn render(progress: usize, area: Rect, buf: &mut Buffer) {
     render_gauge(percent, &progress_label, area[0], buf);
     render_line_gauge_1(percent, &progress_label, area[1], buf);
     render_line_gauge_2(percent, &progress_label, area[2], buf);
-    render_sparkline(progress, area[3], buf);
+    render_sparkline(progress, "Sparkline", area[3], buf);
 }
 
 fn render_gauge(percent: f64, label: &str, area: Rect, buf: &mut Buffer) {
@@ -63,9 +63,9 @@ fn render_line_gauge_2(percent: f64, label: &str, area: Rect, buf: &mut Buffer) 
         .render(area[1], buf);
 }
 
-fn render_sparkline(progress: usize, area: Rect, buf: &mut Buffer) {
+pub fn render_sparkline(progress: usize, title: &str, area: Rect, buf: &mut Buffer) {
     let area = layout(area, Direction::Horizontal, vec![10, 0]);
-    Paragraph::new("Sparkline")
+    Paragraph::new(title)
         .style(Style::new().white())
         .render(area[0], buf);
     let mut data = [

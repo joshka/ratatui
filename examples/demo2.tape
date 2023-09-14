@@ -1,6 +1,6 @@
 # This is a vhs script. See https://github.com/charmbracelet/vhs for more info.
 # To run this script, install vhs and run `vhs ./examples/demo.tape`
-Output "target/demo2.mp4"
+Output "target/demo2.gif"
 Set Theme "OceanicMaterial"
 # Github social preview size (1280x640 with 80px padding)
 Set Width 1280

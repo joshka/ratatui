@@ -16,12 +16,12 @@ impl Widget for MainView {
         let area = layout(area, Direction::Vertical, vec![1, 0, 1]);
         self.render_title_bar(area[0], buf);
         match self.selected_tab {
-            0 => self.render_tab1(area[1], buf),
-            1 => self.render_tab2(area[1], buf),
-            2 => self.render_tab3(area[1], buf),
-            3 => self.render_tab4(area[1], buf),
-            4 => self.render_tab5(area[1], buf),
-            5 => self.render_tab6(area[1], buf),
+            0 => self.render_email_tab(area[1], buf),
+            1 => self.render_traceroute_tab(area[1], buf),
+            2 => self.render_text_tab(area[1], buf),
+            3 => self.render_bars_tab(area[1], buf),
+            4 => self.render_colors_tab(area[1], buf),
+            // 5 => self.render_chart_tab(area[1], buf),
             _ => unreachable!(),
         }
         self.render_bottom_bar(area[2], buf);
@@ -39,18 +39,11 @@ impl MainView {
         )
         .render(area[0], buf);
 
-        Tabs::new(vec![
-            "Recipe",
-            "Words",
-            "Bars",
-            "Chart",
-            "Email",
-            "Traceroute",
-        ])
-        .style(Style::new().fg(Color::Indexed(244)).bg(Color::Indexed(232)))
-        .highlight_style(Style::new().bold().fg(Color::Rgb(64, 96, 192)))
-        .select(self.selected_tab)
-        .render(area[1], buf);
+        Tabs::new(vec!["Email", "Traceroute", "Text", "Bars", "Colors"])
+            .style(Style::new().fg(Color::Indexed(244)).bg(Color::Indexed(232)))
+            .highlight_style(Style::new().bold().fg(Color::Rgb(64, 96, 192)))
+            .select(self.selected_tab)
+            .render(area[1], buf);
     }
 
     fn render_bottom_bar(&self, area: Rect, buf: &mut Buffer) {
@@ -72,11 +65,11 @@ impl MainView {
         .render(area, buf);
     }
 
-    fn render_tab1(&self, area: Rect, buf: &mut Buffer) {
+    fn render_text_tab(&self, area: Rect, buf: &mut Buffer) {
         colors::render_rgb_colors(area, buf);
         let area = area.inner(&Margin {
-            vertical: 1,
-            horizontal: 2,
+            vertical: 0,
+            horizontal: 1,
         });
         let area = Layout::default()
             .direction(Direction::Horizontal)
@@ -84,11 +77,11 @@ impl MainView {
             .split(area);
         let margin = Margin {
             vertical: 1,
-            horizontal: 2,
+            horizontal: 1,
         };
         text::render_paragraph(
             Alignment::Left,
-            Color::LightRed,
+            Color::Rgb(192, 92, 64),
             0,
             area[0].inner(&margin),
             buf,
@@ -109,14 +102,14 @@ impl MainView {
         );
     }
 
-    fn render_tab2(&self, area: Rect, buf: &mut Buffer) {
+    fn render_colors_tab(&self, area: Rect, buf: &mut Buffer) {
         let area = layout(area, Direction::Vertical, vec![5, 1, 0]);
         colors::render(area[0], buf);
         modifiers::render(area[1], buf);
         text::render(self.selected_row, area[2], buf);
     }
 
-    fn render_tab3(&self, area: Rect, buf: &mut Buffer) {
+    fn render_bars_tab(&self, area: Rect, buf: &mut Buffer) {
         colors::render_rgb_colors(area, buf);
         let area = area.inner(&Margin {
             vertical: 1,
@@ -129,15 +122,27 @@ impl MainView {
         gauges::render(self.selected_row, area[1], buf);
     }
 
-    fn render_tab4(&self, area: Rect, buf: &mut Buffer) {
+    fn render_chart_tab(&self, area: Rect, buf: &mut Buffer) {
         chart::render(area, buf);
     }
 
-    fn render_tab5(&self, area: Rect, buf: &mut Buffer) {
+    fn render_email_tab(&self, area: Rect, buf: &mut Buffer) {
+        colors::render_rgb_colors(area, buf);
+        let area = area.inner(&Margin {
+            vertical: 1,
+            horizontal: 2,
+        });
+        Clear.render(area, buf);
         email::render(self.selected_row, area, buf);
     }
 
-    fn render_tab6(&self, area: Rect, buf: &mut Buffer) {
+    fn render_traceroute_tab(&self, area: Rect, buf: &mut Buffer) {
+        colors::render_rgb_colors(area, buf);
+        let area = area.inner(&Margin {
+            vertical: 1,
+            horizontal: 2,
+        });
+        Clear.render(area, buf);
         traceroute::render(self.selected_row, area, buf);
     }
 }

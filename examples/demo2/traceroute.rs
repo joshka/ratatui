@@ -7,6 +7,8 @@ use ratatui::{
     },
 };
 
+use crate::{gauges::render_sparkline, main_view::layout};
+
 struct Hop {
     host: &'static str,
     address: &'static str,
@@ -28,8 +30,10 @@ pub fn render(selected_row: usize, area: Rect, buf: &mut Buffer) {
         .direction(Direction::Horizontal)
         .constraints(vec![Constraint::Ratio(1, 2), Constraint::Ratio(1, 2)])
         .split(area);
+    let left_area = layout(area[0], Direction::Vertical, vec![0, 1]);
     let hops = generate_hops();
-    render_hops(&hops, selected_row, area[0], buf);
+    render_hops(&hops, selected_row, left_area[0], buf);
+    render_sparkline(selected_row, "Ping", left_area[1], buf);
     let path: Option<(&Hop, &Hop)> = hops.iter().tuple_windows().nth(selected_row);
     render_map(path, area[1], buf);
 }
@@ -84,12 +88,12 @@ fn render_hops(hops: &[Hop], selected_row: usize, area: Rect, buf: &mut Buffer) 
         .map(|hop| Row::new(vec![hop.host, hop.address]))
         .collect_vec();
     let block = Block::default()
-        .title("IP Addresses")
+        .title("Traceroute bad.horse")
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded);
     StatefulWidget::render(
         Table::new(rows)
-            .header(Row::new(vec!["Host", "Address"]).dark_gray().on_gray())
+            .header(Row::new(vec!["Host", "Address"]).bold().underlined())
             .widths(&[Constraint::Max(100), Constraint::Length(15)])
             .highlight_style(Style::new().dark_gray().on_white())
             .block(block),
