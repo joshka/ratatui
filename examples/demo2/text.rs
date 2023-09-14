@@ -24,7 +24,11 @@ pub fn render_paragraph(
     let block = Block::new()
         .title(format!("{} aligned", alignment))
         .title_alignment(alignment)
-        .title_style(Style::new().fg(Color::Indexed(232)))
+        .title_style(
+            Style::new()
+                .fg(Color::Indexed(255))
+                .bg(Color::Rgb(16, 24, 48)),
+        )
         .border_type(BorderType::Rounded)
         .borders(Borders::ALL)
         .border_style(Style::new().fg(Color::Indexed(252)));

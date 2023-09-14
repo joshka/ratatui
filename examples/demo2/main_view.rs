@@ -3,7 +3,7 @@ use std::rc::Rc;
 use itertools::Itertools;
 use ratatui::{prelude::*, widgets::*};
 
-use crate::{bars, chart, colors, email, gauges, modifiers, recipe, text, traceroute};
+use crate::{bars, chart, colors, email, gauges, logo, modifiers, recipe, text, traceroute};
 
 pub struct MainView {
     pub selected_tab: usize,
@@ -16,11 +16,12 @@ impl Widget for MainView {
         let area = layout(area, Direction::Vertical, vec![1, 0, 1]);
         self.render_title_bar(area[0], buf);
         match self.selected_tab {
-            0 => self.render_email_tab(area[1], buf),
-            1 => self.render_traceroute_tab(area[1], buf),
-            2 => self.render_text_tab(area[1], buf),
-            3 => self.render_bars_tab(area[1], buf),
-            4 => self.render_colors_tab(area[1], buf),
+            0 => self.render_logo_tab(area[1], buf),
+            1 => self.render_email_tab(area[1], buf),
+            2 => self.render_traceroute_tab(area[1], buf),
+            3 => self.render_text_tab(area[1], buf),
+            4 => self.render_bars_tab(area[1], buf),
+            // 5 => self.render_colors_tab(area[1], buf),
             // 5 => self.render_chart_tab(area[1], buf),
             _ => unreachable!(),
         }
@@ -63,6 +64,27 @@ impl MainView {
         .fg(Color::Indexed(244))
         .bg(Color::Indexed(232))
         .render(area, buf);
+    }
+
+    fn render_logo_tab(&self, area: Rect, buf: &mut Buffer) {
+        colors::render_rgb_colors(area, buf);
+        let area = layout(area, Direction::Horizontal, vec![32, 0]);
+        let margin = Margin {
+            vertical: 0,
+            horizontal: 1,
+        };
+        logo::render(area[0].inner(&margin), buf);
+        let margin = Margin {
+            vertical: 1,
+            horizontal: 2,
+        };
+        text::render_paragraph(
+            Alignment::Left,
+            Color::LightBlue,
+            0,
+            area[1].inner(&margin),
+            buf,
+        );
     }
 
     fn render_text_tab(&self, area: Rect, buf: &mut Buffer) {

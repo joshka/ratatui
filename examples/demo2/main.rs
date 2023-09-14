@@ -6,6 +6,7 @@ mod chart;
 mod colors;
 mod email;
 mod gauges;
+mod logo;
 mod main_view;
 mod modifiers;
 mod recipe;
