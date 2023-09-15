@@ -10,22 +10,16 @@ Hide
 Type "cargo run --example demo2"
 Enter
 Sleep 2s
-Set TypingSpeed 1s
 Show
-# Recipe screen
+# About screen
 Sleep 3s
-Right
-# Words
-Sleep 3s
-Right
-# Bars
-Sleep 2s
-Right
-# Chart
-Sleep 1s
-Right
+Tab
 # Email
-Down 4
-Right
-# Traceroute
 Sleep 3s
+Tab
+# Trace route
+Sleep 3s
+Tab
+# Misc
+Sleep 3s
+Tab
