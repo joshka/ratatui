@@ -3,6 +3,7 @@ use ratatui::prelude::*;
 pub const DARK_BLUE: Color = Color::Rgb(16, 24, 48);
 pub const LIGHT_BLUE: Color = Color::Rgb(64, 96, 192);
 pub const APP_BACKGROUND: Color = DARK_BLUE;
+pub const APP: Style = Style::new().bg(APP_BACKGROUND);
 pub const APP_TITLE: Style = Style::new()
     .add_modifier(Modifier::BOLD)
     .fg(Color::Indexed(252))

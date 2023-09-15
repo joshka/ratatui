@@ -8,7 +8,7 @@ use ratatui::{
 };
 
 use super::Tab;
-use crate::{colors, tui::layout};
+use crate::{colors, styles, tui::layout};
 
 #[derive(Debug)]
 struct Hop {
@@ -65,6 +65,7 @@ impl TracerouteTab {
             horizontal: 2,
         });
         Clear.render(area, buf);
+        Block::new().style(styles::APP).render(area, buf);
         let area = Layout::default()
             .direction(Direction::Horizontal)
             .constraints(vec![Constraint::Ratio(1, 2), Constraint::Ratio(1, 2)])

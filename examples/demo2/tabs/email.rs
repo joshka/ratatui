@@ -3,7 +3,7 @@ use ratatui::{prelude::*, widgets::*};
 use unicode_width::UnicodeWidthStr;
 
 use super::Tab;
-use crate::{colors, tui::layout};
+use crate::{colors, styles, tui::layout};
 
 #[derive(Debug, Default)]
 pub struct Email {
@@ -124,7 +124,7 @@ impl EmailTab {
 
     fn render_email(&self, area: Rect, buf: &mut Buffer) {
         let email = self.emails.get(self.selected_row);
-        let block = Block::new().borders(Borders::TOP);
+        let block = Block::new().borders(Borders::TOP).style(styles::APP);
         let inner = block.inner(area);
         block.render(area, buf);
         if let Some(email) = email {

@@ -112,7 +112,7 @@ fn render_crate_description(area: Rect, buf: &mut Buffer) {
         }),
     );
     Clear.render(area, buf); // clear out the color swatches
-
+    Block::new().style(styles::APP).render(area, buf);
     let area = area.inner(
         &(Margin {
             vertical: 1,

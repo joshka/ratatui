@@ -12,14 +12,14 @@ Enter
 Sleep 2s
 Show
 # About screen
-Sleep 3s
+Sleep 5s
 Tab
 # Email
-Sleep 3s
+Sleep 5s
 Tab
 # Trace route
-Sleep 3s
+Sleep 5s
 Tab
 # Misc
-Sleep 3s
+Sleep 5s
 Tab
