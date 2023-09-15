@@ -9,5 +9,7 @@ pub const APP_TITLE: Style = Style::new()
     .bg(Color::Indexed(232));
 pub const TABS: Style = Style::new().fg(Color::Indexed(244)).bg(Color::Indexed(232));
 pub const TABS_SELECTED: Style = Style::new().add_modifier(Modifier::BOLD).fg(LIGHT_BLUE);
-pub const BORDERS: Style = Style::new().fg(Color::Indexed(252));
+pub const BORDERS: Style = Style::new()
+    .fg(Color::Indexed(252))
+    .add_modifier(Modifier::BOLD);
 pub const DESCRIPTION: Style = Style::new().fg(Color::Gray).bg(DARK_BLUE);

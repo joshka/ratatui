@@ -15,11 +15,11 @@ pub struct AppWidget {
 impl AppWidget {
     pub fn new(selected_tab: usize) -> Self {
         let tabs: Vec<Box<dyn Tab>> = vec![
-            Box::new(tabs::AboutTab),
+            Box::new(tabs::AboutTab::new()),
             Box::new(tabs::EmailTab::new()),
             Box::new(tabs::TracerouteTab::new()),
+            Box::new(tabs::BarsTab::new()),
             // Box::new(tabs::TextTab),
-            // Box::new(tabs::BarsTab),
         ];
 
         AppWidget {

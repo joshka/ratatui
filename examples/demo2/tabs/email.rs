@@ -23,12 +23,12 @@ impl Tab for EmailTab {
         "Email".to_string()
     }
 
-    fn render(&self, area: Rect, buf: &mut Buffer) {
-        self.render(area, buf);
-    }
-
     fn select(&mut self, row: usize) {
         self.selected_row = row;
+    }
+
+    fn render(&self, area: Rect, buf: &mut Buffer) {
+        self.render(area, buf);
     }
 }
 
