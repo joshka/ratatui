@@ -18,8 +18,7 @@ impl AppWidget {
             Box::new(tabs::AboutTab::new()),
             Box::new(tabs::EmailTab::new()),
             Box::new(tabs::TracerouteTab::new()),
-            Box::new(tabs::BarsTab::new()),
-            // Box::new(tabs::TextTab),
+            Box::new(tabs::MiscWidgetsTab::new()),
         ];
 
         AppWidget {
@@ -60,24 +59,23 @@ impl AppWidget {
     }
 
     fn render_bottom_bar(&self, area: Rect, buf: &mut Buffer) {
-        let key_style = Style::new().fg(Color::Indexed(232)).bg(Color::Indexed(244));
+        let key_style = Style::new().fg(Color::Indexed(232)).bg(Color::Indexed(236));
         Paragraph::new(Line::from(vec![
-            " Q ".set_style(key_style),
-            " Quit ".into(),
+            " Q/Esc ".set_style(key_style),
+            " Quit  ".into(),
             " Tab ".set_style(key_style),
-            " Next Tab ".into(),
-            " Shift+Tab ".set_style(key_style),
-            " Prev Tab ".into(),
-            " ← ".set_style(key_style),
-            " Left ".into(),
-            " → ".set_style(key_style),
-            " Right ".into(),
-            " ↑ ".set_style(key_style),
-            " Up ".into(),
-            " ↓ ".set_style(key_style),
-            " Down ".into(),
+            " Next Tab  ".into(),
+            " ←/h ".set_style(key_style),
+            " Left  ".into(),
+            " →/l ".set_style(key_style),
+            " Right  ".into(),
+            " ↑/k ".set_style(key_style),
+            " Up  ".into(),
+            " ↓/j ".set_style(key_style),
+            " Down".into(),
         ]))
-        .fg(Color::Indexed(244))
+        .alignment(Alignment::Center)
+        .fg(Color::Indexed(236))
         .bg(Color::Indexed(232))
         .render(area, buf);
     }

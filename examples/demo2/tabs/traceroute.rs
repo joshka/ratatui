@@ -33,6 +33,16 @@ pub struct TracerouteTab {
     hops: Vec<Hop>,
 }
 
+impl TracerouteTab {
+    pub fn new() -> Self {
+        let hops = generate_hops();
+        Self {
+            selected_row: 0,
+            hops,
+        }
+    }
+}
+
 impl Tab for TracerouteTab {
     fn title(&self) -> String {
         "Traceroute".to_string()
@@ -48,14 +58,6 @@ impl Tab for TracerouteTab {
 }
 
 impl TracerouteTab {
-    pub fn new() -> Self {
-        let hops = generate_hops();
-        Self {
-            selected_row: 0,
-            hops,
-        }
-    }
-
     fn render_traceroute_tab(&self, area: Rect, buf: &mut Buffer) {
         colors::render_rgb_colors(area, buf);
         let area = area.inner(&Margin {
@@ -67,9 +69,9 @@ impl TracerouteTab {
             .direction(Direction::Horizontal)
             .constraints(vec![Constraint::Ratio(1, 2), Constraint::Ratio(1, 2)])
             .split(area);
-        let left_area = layout(area[0], Direction::Vertical, vec![0, 1]);
+        let left_area = layout(area[0], Direction::Vertical, vec![0, 4]);
         self.render_hops(left_area[0], buf);
-        // render_sparkline(self.selected_row, "Ping", left_area[1], buf);
+        render_ping(self.selected_row, left_area[1], buf);
         self.render_map(area[1], buf);
     }
 
@@ -173,4 +175,24 @@ fn generate_hops() -> Vec<Hop> {
         Hop::new("it-s.hi-ho.silver", "162.252.205.156", sydney),
         Hop::new("signed.bad.horse", "162.252.205.157", canberra),
     ]
+}
+
+pub fn render_ping(progress: usize, area: Rect, buf: &mut Buffer) {
+    let mut data = [
+        8, 8, 8, 8, 7, 7, 7, 6, 6, 5, 4, 3, 3, 2, 2, 1, 1, 1, 2, 2, 3, 4, 5, 6, 7, 7, 8, 8, 8, 7,
+        7, 6, 5, 4, 3, 2, 1, 1, 1, 1, 1, 2, 4, 6, 7, 8, 8, 8, 8, 6, 4, 2, 1, 1, 1, 1, 2, 2, 2, 3,
+        3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7,
+    ];
+    let mid = progress % data.len();
+    data.rotate_left(mid);
+    Sparkline::default()
+        .block(
+            Block::new()
+                .title("Ping")
+                .borders(Borders::ALL)
+                .border_type(BorderType::Rounded),
+        )
+        .data(&data)
+        .style(Style::new().white())
+        .render(area, buf);
 }

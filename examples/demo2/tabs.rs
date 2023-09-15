@@ -1,13 +1,13 @@
 use ratatui::prelude::*;
 
 mod about;
-mod bars;
 mod email;
+mod misc;
 mod traceroute;
 
 pub use about::AboutTab;
-pub use bars::BarsTab;
 pub use email::EmailTab;
+pub use misc::MiscWidgetsTab;
 pub use traceroute::TracerouteTab;
 
 pub trait Tab {

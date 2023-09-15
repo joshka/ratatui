@@ -1,7 +1,7 @@
 use std::{io::Stdout, time::Duration};
 
 use anyhow::{Context, Result};
-use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind};
+use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use ratatui::prelude::*;
 
 use crate::{app_widget::AppWidget, tabs, tabs::Tab, tui};
@@ -26,7 +26,7 @@ impl App {
                 Box::new(tabs::AboutTab::new()),
                 Box::new(tabs::EmailTab::new()),
                 Box::new(tabs::TracerouteTab::new()),
-                Box::new(tabs::BarsTab::new()),
+                Box::new(tabs::MiscWidgetsTab::new()),
             ],
         })
     }
@@ -67,11 +67,12 @@ impl App {
             KeyCode::Char('q') => {
                 self.should_quit = true;
             }
-            KeyCode::Tab => {
-                self.tab_index = self.tab_index.saturating_add(1).min(self.tabs.len() - 1);
+            KeyCode::Tab | KeyCode::BackTab if key.modifiers.contains(KeyModifiers::SHIFT) => {
+                let tab_index = self.tab_index + self.tabs.len(); // to wrap around properly
+                self.tab_index = tab_index.saturating_sub(1) % self.tabs.len();
             }
-            KeyCode::BackTab => {
-                self.tab_index = self.tab_index.saturating_sub(1);
+            KeyCode::Tab | KeyCode::BackTab => {
+                self.tab_index = self.tab_index.saturating_add(1) % self.tabs.len();
             }
             KeyCode::Left | KeyCode::Char('h') => {
                 self.selected_row = 0;
