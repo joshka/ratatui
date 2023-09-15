@@ -1,4 +1,4 @@
-use ratatui::{prelude::*, widgets::*};
+// use ratatui::{prelude::*, widgets::*};
 
 // pub fn render_text_tab(&self, area: Rect, buf: &mut Buffer) {
 //     colors::render_rgb_colors(area, buf);
@@ -51,46 +51,46 @@ use ratatui::{prelude::*, widgets::*};
 //     render_paragraph(Alignment::Right, Color::LightBlue, scroll, area[2], buf);
 // }
 
-pub fn render_paragraph(
-    alignment: Alignment,
-    _color: Color,
-    scroll: usize,
-    area: Rect,
-    buf: &mut Buffer,
-) {
-    let block = Block::new()
-        .title(format!("{} aligned", alignment))
-        .title_alignment(alignment)
-        .title_style(
-            Style::new()
-                .fg(Color::Indexed(255))
-                .bg(Color::Rgb(16, 24, 48)),
-        )
-        .border_type(BorderType::Rounded)
-        .borders(Borders::ALL)
-        .border_style(Style::new().fg(Color::Indexed(252)));
-    // .padding(Padding::new(1, 1, 0, 0)); // for scrollbar
-    let inner = block.inner(area);
-    block.render(area, buf);
-    let offset = (scroll as u16, 0);
-    Clear.render(inner, buf);
-    Paragraph::new(lipsum::lipsum(40))
-        .style(Style::new().fg(Color::Gray).bg(Color::Rgb(16, 24, 48)))
-        .alignment(alignment)
-        .wrap(Wrap { trim: true })
-        .scroll(offset)
-        .render(inner, buf);
+// pub fn render_paragraph(
+//     alignment: Alignment,
+//     _color: Color,
+//     scroll: usize,
+//     area: Rect,
+//     buf: &mut Buffer,
+// ) {
+//     let block = Block::new()
+//         .title(format!("{} aligned", alignment))
+//         .title_alignment(alignment)
+//         .title_style(
+//             Style::new()
+//                 .fg(Color::Indexed(255))
+//                 .bg(Color::Rgb(16, 24, 48)),
+//         )
+//         .border_type(BorderType::Rounded)
+//         .borders(Borders::ALL)
+//         .border_style(Style::new().fg(Color::Indexed(252)));
+//     // .padding(Padding::new(1, 1, 0, 0)); // for scrollbar
+//     let inner = block.inner(area);
+//     block.render(area, buf);
+//     let offset = (scroll as u16, 0);
+//     Clear.render(inner, buf);
+//     Paragraph::new(lipsum::lipsum(40))
+//         .style(Style::new().fg(Color::Gray).bg(Color::Rgb(16, 24, 48)))
+//         .alignment(alignment)
+//         .wrap(Wrap { trim: true })
+//         .scroll(offset)
+//         .render(inner, buf);
 
-    // let scroll_area = area.inner(&Margin {
-    //     vertical: 1,
-    //     horizontal: 0,
-    // });
-    // let mut scroll_state = ScrollbarState::new(14)
-    //     .viewport_content_length(scroll_area.height as usize)
-    //     .position(scroll);
-    // Scrollbar::new(ScrollbarOrientation::VerticalRight)
-    //     .style(Style::new().fg(color))
-    //     .begin_symbol(None)
-    //     .end_symbol(None)
-    //     .render(scroll_area, buf, &mut scroll_state);
-}
+//     // let scroll_area = area.inner(&Margin {
+//     //     vertical: 1,
+//     //     horizontal: 0,
+//     // });
+//     // let mut scroll_state = ScrollbarState::new(14)
+//     //     .viewport_content_length(scroll_area.height as usize)
+//     //     .position(scroll);
+//     // Scrollbar::new(ScrollbarOrientation::VerticalRight)
+//     //     .style(Style::new().fg(color))
+//     //     .begin_symbol(None)
+//     //     .end_symbol(None)
+//     //     .render(scroll_area, buf, &mut scroll_state);
+// }

@@ -1,8 +1,8 @@
 use itertools::Itertools;
-use ratatui::prelude::*;
+use ratatui::{prelude::*, widgets::*};
 
 use super::Tab;
-use crate::{colors, text::render_paragraph, tui::layout};
+use crate::{colors, styles, tui::layout};
 
 const RATATUI_LOGO: [&str; 32] = [
     "               ███              ",
@@ -53,32 +53,18 @@ impl Tab for AboutTab {
     }
 
     fn render(&self, area: Rect, buf: &mut Buffer) {
-        render(area, buf);
+        colors::render_rgb_colors(area, buf);
+        let area = layout(area, Direction::Horizontal, vec![32, 0]);
+        render_logo(area[0], buf);
+        render_crate_description(area[1], buf);
     }
 }
 
-pub fn render(area: Rect, buf: &mut Buffer) {
-    colors::render_rgb_colors(area, buf);
-    let area = layout(area, Direction::Horizontal, vec![32, 0]);
-    let margin = Margin {
+pub fn render_logo(area: Rect, buf: &mut Buffer) {
+    let area = area.inner(&Margin {
         vertical: 0,
         horizontal: 1,
-    };
-    render_logo(area[0].inner(&margin), buf);
-    let margin = Margin {
-        vertical: 1,
-        horizontal: 2,
-    };
-    render_paragraph(
-        Alignment::Left,
-        Color::LightBlue,
-        0,
-        area[1].inner(&margin),
-        buf,
-    );
-}
-
-pub fn render_logo(area: Rect, buf: &mut Buffer) {
+    });
     for (y, (line1, line2)) in RATATUI_LOGO.iter().tuples().enumerate() {
         for (x, (ch1, ch2)) in line1.chars().zip(line2.chars()).enumerate() {
             let x = area.left() + x as u16;
@@ -116,4 +102,47 @@ pub fn render_logo(area: Rect, buf: &mut Buffer) {
             };
         }
     }
+}
+
+fn render_crate_description(area: Rect, buf: &mut Buffer) {
+    let margin = Margin {
+        vertical: 1,
+        horizontal: 2,
+    };
+    let area = area.inner(&margin);
+
+    // intentionally draw a paragraph inside a block instead of using Paragraph::block()
+    // so that the block's border is not drawn with the paragraph's background color
+    let block = Block::new()
+        .border_type(BorderType::Rounded)
+        .borders(Borders::ALL)
+        .border_style(styles::BORDERS);
+    let inner = block.inner(area);
+    block.render(area, buf);
+
+    let offset = (0, 0);
+    Clear.render(inner, buf); // necessary in order to clear out the color swatches
+    let text = "Ratatui
+    - cooking up terminal user interfaces -
+
+    Ratatui is a Rust crate that provides widgets (e.g. Pargraph, Table) and draws them to the screen efficiently every frame.";
+    Paragraph::new(text)
+        .style(styles::DESCRIPTION)
+        .block(Block::new().padding(Padding::new(2, 2, 1, 1)))
+        .wrap(Wrap { trim: true })
+        .scroll(offset)
+        .render(inner, buf);
+
+    // let scroll_area = area.inner(&Margin {
+    //     vertical: 1,
+    //     horizontal: 0,
+    // });
+    // let mut scroll_state = ScrollbarState::new(14)
+    //     .viewport_content_length(scroll_area.height as usize)
+    //     .position(scroll);
+    // Scrollbar::new(ScrollbarOrientation::VerticalRight)
+    //     .style(Style::new().fg(color))
+    //     .begin_symbol(None)
+    //     .end_symbol(None)
+    //     .render(scroll_area, buf, &mut scroll_state);;
 }

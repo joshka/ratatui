@@ -4,7 +4,7 @@ use anyhow::{Context, Result};
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind};
 use ratatui::prelude::*;
 
-use crate::{tabs, tabs::Tab, tui, view::MainView};
+use crate::{app_widget::AppWidget, tabs, tabs::Tab, tui};
 
 pub struct App {
     terminal: Terminal<CrosstermBackend<Stdout>>,
@@ -44,7 +44,7 @@ impl App {
     fn draw(&mut self) -> Result<()> {
         self.terminal
             .draw(|frame| {
-                let view = MainView::new(self.tab_index, self.selected_row);
+                let view = AppWidget::new(self.tab_index);
                 let area = frame.size();
                 frame.render_widget(view, area)
             })
