@@ -1,6 +1,5 @@
-use ratatui::{prelude::*, widgets::*};
-
 use crate::main_view::layout;
+use ratatui::{prelude::*, widgets::*};
 
 pub fn render(progress: usize, area: Rect, buf: &mut Buffer) {
     let block = Block::new()

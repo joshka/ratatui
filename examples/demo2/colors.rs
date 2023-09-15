@@ -1,18 +1,26 @@
+#![allow(dead_code)]
 use palette::{
     convert::{FromColorUnclamped, IntoColorUnclamped},
     Okhsv, Srgb,
 };
 use ratatui::{prelude::*, widgets::*};
 
-use crate::main_view::layout;
+// use crate::view::layout;
 
-pub fn render(area: Rect, buf: &mut Buffer) {
-    let area = layout(area, Direction::Horizontal, vec![8, 1, 36, 1, 0]);
+// fn render_colors_tab(&self, area: Rect, buf: &mut Buffer) {
+//     let area = layout(area, Direction::Vertical, vec![5, 1, 0]);
+//     colors::render(area[0], buf);
+//     modifiers::render(area[1], buf);
+//     text::render(self.selected_row, area[2], buf);
+// }
 
-    render_16_colors(area[0], buf);
-    render_256_colors(area[2], buf);
-    render_rgb_colors(area[4], buf);
-}
+// pub fn render(area: Rect, buf: &mut Buffer) {
+//     let area = layout(area, Direction::Horizontal, vec![8, 1, 36, 1, 0]);
+
+//     render_16_colors(area[0], buf);
+//     render_256_colors(area[2], buf);
+//     render_rgb_colors(area[4], buf);
+// }
 
 fn render_16_colors(area: Rect, buf: &mut Buffer) {
     let sym = "██";

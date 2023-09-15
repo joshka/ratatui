@@ -1,22 +1,59 @@
 use ratatui::{prelude::*, widgets::*};
 
-pub fn render(scroll: usize, area: Rect, buf: &mut Buffer) {
-    let area = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints(vec![
-            Constraint::Ratio(1, 3),
-            Constraint::Ratio(1, 3),
-            Constraint::Ratio(1, 3),
-        ])
-        .split(area);
-    render_paragraph(Alignment::Left, Color::LightRed, scroll, area[0], buf);
-    render_paragraph(Alignment::Center, Color::LightGreen, scroll, area[1], buf);
-    render_paragraph(Alignment::Right, Color::LightBlue, scroll, area[2], buf);
-}
+// pub fn render_text_tab(&self, area: Rect, buf: &mut Buffer) {
+//     colors::render_rgb_colors(area, buf);
+//     let area = area.inner(&Margin {
+//         vertical: 0,
+//         horizontal: 1,
+//     });
+//     let area = Layout::default()
+//         .direction(Direction::Horizontal)
+//         .constraints(vec![Constraint::Ratio(1, 3); 3])
+//         .split(area);
+//     let margin = Margin {
+//         vertical: 1,
+//         horizontal: 1,
+//     };
+//     text::render_paragraph(
+//         Alignment::Left,
+//         Color::Rgb(192, 92, 64),
+//         0,
+//         area[0].inner(&margin),
+//         buf,
+//     );
+//     text::render_paragraph(
+//         Alignment::Center,
+//         Color::LightGreen,
+//         0,
+//         area[1].inner(&margin),
+//         buf,
+//     );
+//     text::render_paragraph(
+//         Alignment::Right,
+//         Color::LightBlue,
+//         0,
+//         area[2].inner(&margin),
+//         buf,
+//     );
+// }
+
+// pub fn render(scroll: usize, area: Rect, buf: &mut Buffer) {
+//     let area = Layout::default()
+//         .direction(Direction::Horizontal)
+//         .constraints(vec![
+//             Constraint::Ratio(1, 3),
+//             Constraint::Ratio(1, 3),
+//             Constraint::Ratio(1, 3),
+//         ])
+//         .split(area);
+//     render_paragraph(Alignment::Left, Color::LightRed, scroll, area[0], buf);
+//     render_paragraph(Alignment::Center, Color::LightGreen, scroll, area[1], buf);
+//     render_paragraph(Alignment::Right, Color::LightBlue, scroll, area[2], buf);
+// }
 
 pub fn render_paragraph(
     alignment: Alignment,
-    color: Color,
+    _color: Color,
     scroll: usize,
     area: Rect,
     buf: &mut Buffer,

@@ -1,17 +1,11 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 
 mod app;
-mod bars;
-mod chart;
 mod colors;
-mod email;
-mod gauges;
-mod logo;
-mod main_view;
-mod modifiers;
-mod recipe;
+mod tabs;
 mod text;
-mod traceroute;
+mod tui;
+mod view;
 
 fn main() -> Result<()> {
     app::install_panic_hook();

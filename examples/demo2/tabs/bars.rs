@@ -1,13 +1,51 @@
+#![allow(dead_code)]
+
 use ratatui::{prelude::*, widgets::*};
 
-pub fn render(area: Rect, buf: &mut Buffer) {
-    let area = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints(vec![Constraint::Ratio(1, 3), Constraint::Ratio(2, 3)])
-        .split(area);
+use super::Tab;
+use crate::{colors, tui::layout};
 
-    render_simple_barchart(area[0], buf);
-    render_horizontal_barchart(area[1], buf);
+pub struct BarsTab {
+    pub selected_row: usize,
+}
+
+impl Tab for BarsTab {
+    fn title(&self) -> String {
+        "Bars".to_string()
+    }
+
+    fn render(&self, area: Rect, buf: &mut Buffer) {
+        self.render_bars_tab(area, buf);
+    }
+}
+
+impl BarsTab {
+    pub fn new() -> Self {
+        Self { selected_row: 0 }
+    }
+
+    fn render_bars_tab(&self, area: Rect, buf: &mut Buffer) {
+        colors::render_rgb_colors(area, buf);
+        let area = area.inner(&Margin {
+            vertical: 1,
+            horizontal: 2,
+        });
+        let area = layout(area, Direction::Vertical, vec![0, 6]);
+        Clear.render(area[0], buf);
+        Clear.render(area[1], buf);
+        // bars::render(area[0], buf);
+        // gauges::render(self.selected_row, area[1], buf);
+    }
+
+    pub fn render(area: Rect, buf: &mut Buffer) {
+        let area = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(vec![Constraint::Ratio(1, 3), Constraint::Ratio(2, 3)])
+            .split(area);
+
+        render_simple_barchart(area[0], buf);
+        render_horizontal_barchart(area[1], buf);
+    }
 }
 
 fn render_simple_barchart(area: Rect, buf: &mut Buffer) {
