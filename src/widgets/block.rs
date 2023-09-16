@@ -82,6 +82,10 @@ impl BorderType {
             BorderType::Thick => line::THICK,
         }
     }
+
+    pub const fn to_line_set(self) -> line::Set {
+        Self::line_symbols(self)
+    }
 }
 
 /// Defines the padding of a [`Block`].
@@ -213,10 +217,10 @@ pub struct Block<'a> {
     borders: Borders,
     /// Border style
     border_style: Style,
-    /// Type of the border. The default is plain lines but one can choose to have rounded or
-    /// doubled lines instead.
-    border_type: BorderType,
-
+    // /// Type of the border. The default is plain lines but one can choose to have rounded or
+    // /// doubled lines instead.
+    // border_type: BorderType,
+    border_line_set: line::Set,
     /// Widget style
     style: Style,
     /// Block padding
@@ -233,7 +237,7 @@ impl<'a> Block<'a> {
             titles_position: Position::Top,
             borders: Borders::NONE,
             border_style: Style::new(),
-            border_type: BorderType::Plain,
+            border_line_set: BorderType::Plain.to_line_set(),
             style: Style::new(),
             padding: Padding::zero(),
         }
@@ -416,7 +420,12 @@ impl<'a> Block<'a> {
     ///
     /// See [`BorderType`] for the full list of available symbols.
     pub const fn border_type(mut self, border_type: BorderType) -> Block<'a> {
-        self.border_type = border_type;
+        self.border_line_set = border_type.to_line_set();
+        self
+    }
+
+    pub const fn border_line_set(mut self, border_line_set: line::Set) -> Block<'a> {
+        self.border_line_set = border_line_set;
         self
     }
 
@@ -511,20 +520,20 @@ impl<'a> Block<'a> {
 
     fn render_borders(&self, area: Rect, buf: &mut Buffer) {
         buf.set_style(area, self.style);
-        let symbols = BorderType::line_symbols(self.border_type);
+        let symbols = self.border_line_set;
 
         // Sides
         if self.borders.intersects(Borders::LEFT) {
             for y in area.top()..area.bottom() {
                 buf.get_mut(area.left(), y)
-                    .set_symbol(symbols.vertical)
+                    .set_symbol(symbols.vertical_left)
                     .set_style(self.border_style);
             }
         }
         if self.borders.intersects(Borders::TOP) {
             for x in area.left()..area.right() {
                 buf.get_mut(x, area.top())
-                    .set_symbol(symbols.horizontal)
+                    .set_symbol(symbols.horizontal_up)
                     .set_style(self.border_style);
             }
         }
@@ -532,7 +541,7 @@ impl<'a> Block<'a> {
             let x = area.right() - 1;
             for y in area.top()..area.bottom() {
                 buf.get_mut(x, y)
-                    .set_symbol(symbols.vertical)
+                    .set_symbol(symbols.vertical_right)
                     .set_style(self.border_style);
             }
         }
@@ -540,7 +549,7 @@ impl<'a> Block<'a> {
             let y = area.bottom() - 1;
             for x in area.left()..area.right() {
                 buf.get_mut(x, y)
-                    .set_symbol(symbols.horizontal)
+                    .set_symbol(symbols.horizontal_down)
                     .set_style(self.border_style);
             }
         }
@@ -927,7 +936,7 @@ mod tests {
                 titles_position: Position::Top,
                 borders: Borders::NONE,
                 border_style: Style::new(),
-                border_type: BorderType::Plain,
+                border_line_set: BorderType::Plain.to_line_set(),
                 style: Style::new(),
                 padding: Padding::zero(),
             }

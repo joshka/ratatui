@@ -1,7 +1,72 @@
+use itertools::Itertools;
 use ratatui::{prelude::*, widgets::*};
 
 use super::Tab;
 use crate::{colors, styles, tui};
+
+struct Ingredient {
+    quantity: &'static str,
+    name: &'static str,
+    notes: &'static str,
+}
+
+const INGREDIENTS: &[Ingredient] = &[
+    Ingredient {
+        quantity: "4 tbsp",
+        name: "olive oil",
+        notes: "",
+    },
+    Ingredient {
+        quantity: "1",
+        name: "onion",
+        notes: "thinly sliced",
+    },
+    Ingredient {
+        quantity: "4",
+        name: "cloves garlic",
+        notes: "peeled and sliced",
+    },
+    Ingredient {
+        quantity: "1",
+        name: "small bay leaf",
+        notes: "",
+    },
+    Ingredient {
+        quantity: "1",
+        name: "small eggplant",
+        notes: "cut into 1/2 inch cubes",
+    },
+    Ingredient {
+        quantity: "1",
+        name: "small zucchini",
+        notes: "halved lengthwise and cut into thin slices",
+    },
+    Ingredient {
+        quantity: "1",
+        name: "red bell pepper",
+        notes: "cut into slivers",
+    },
+    Ingredient {
+        quantity: "4",
+        name: "plum tomatoes",
+        notes: "coarsely chopped",
+    },
+    Ingredient {
+        quantity: "1 tsp",
+        name: "kosher salt",
+        notes: "",
+    },
+    Ingredient {
+        quantity: "1/4 cup",
+        name: "shredded fresh basil leaves",
+        notes: "",
+    },
+    Ingredient {
+        quantity: "",
+        name: "freshly ground black pepper",
+        notes: "",
+    },
+];
 
 #[derive(Debug)]
 pub struct RecipeTab {
@@ -10,9 +75,8 @@ pub struct RecipeTab {
 
 impl RecipeTab {
     pub fn new(selected_row: usize) -> Self {
-        const INGREDIENT_COUNT: usize = 11; // TODO: derive this from the table
         Self {
-            selected_row: selected_row % INGREDIENT_COUNT,
+            selected_row: selected_row % INGREDIENTS.len(),
         }
     }
 }
@@ -33,8 +97,21 @@ impl Tab for RecipeTab {
             horizontal: 2,
         });
         Clear.render(area, buf);
-        Block::new().style(styles::APP).render(area, buf);
+        Block::new()
+            .style(styles::APP)
+            .borders(Borders::ALL)
+            .border_line_set(ratatui::symbols::line::QUADRANT_OUTSIDE)
+            .border_style(
+                Style::new()
+                    .bg(styles::APP.bg.unwrap())
+                    .fg(Color::Indexed(250)),
+            )
+            .render(area, buf);
 
+        let area = area.inner(&Margin {
+            horizontal: 2,
+            vertical: 1,
+        });
         let area = tui::layout(area, Direction::Vertical, vec![8, 0]);
 
         let lines: Vec<Line> = vec![
@@ -60,35 +137,23 @@ impl Tab for RecipeTab {
 
         let mut state = TableState::default().with_selected(Some(self.selected_row));
         // https://www.realsimple.com/food-recipes/browse-all-recipes/ratatouille
+
+        let rows = INGREDIENTS
+            .iter()
+            .map(|i| Row::new(vec![i.quantity, i.name, i.notes]))
+            .collect_vec();
         StatefulWidget::render(
-            Table::new(vec![
-                Row::new(vec!["4 tbsp", "olive oil", ""]),
-                Row::new(vec!["1", "onion", "thinly sliced"]),
-                Row::new(vec!["4", "cloves garlic", "peeled and sliced"]),
-                Row::new(vec!["1", "small bay leaf", ""]),
-                Row::new(vec!["1", "small eggplant", "cut into 1/2 inch cubes"]),
-                Row::new(vec![
-                    "1".into(),
-                    "small zucchini".into(),
-                    Text::raw("halved lengthwise and cut into\nthin slices"),
+            Table::new(rows)
+                .header(
+                    Row::new(vec!["Qty", "Ingredient", "Notes"])
+                        .style(Style::new().white().underlined()),
+                )
+                .widths(&[
+                    Constraint::Length(7),
+                    Constraint::Length(30),
+                    Constraint::Length(450),
                 ])
-                .height(2),
-                Row::new(vec!["1", "red bell pepper", "cut into slivers"]),
-                Row::new(vec!["4", "plum tomatoes", "coarsely chopped"]),
-                Row::new(vec!["1 tsp", "kosher salt", ""]),
-                Row::new(vec!["1/4 cup", "shredded fresh basil leaves", ""]),
-                Row::new(vec!["", "freshly ground black pepper", ""]),
-            ])
-            .header(
-                Row::new(vec!["Qty", "Ingredient", "Notes"])
-                    .style(Style::new().white().underlined()),
-            )
-            .widths(&[
-                Constraint::Length(7),
-                Constraint::Length(30),
-                Constraint::Length(450),
-            ])
-            .highlight_style(Style::new().light_yellow()),
+                .highlight_style(Style::new().light_yellow()),
             area[1],
             buf,
             &mut state,

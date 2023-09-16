@@ -157,7 +157,23 @@ pub mod line {
     pub const DOUBLE_CROSS: &str = "╬";
     pub const THICK_CROSS: &str = "╋";
 
-    #[derive(Debug, Clone, Eq, PartialEq, Hash)]
+    pub const QUADRANT_TOP_LEFT: &str = "▘";
+    pub const QUADRANT_TOP_RIGHT: &str = "▝";
+    pub const QUADRANT_BOTTOM_LEFT: &str = "▖";
+    pub const QUADRANT_BOTTOM_RIGHT: &str = "▗";
+    pub const QUADRANT_TOP_HALF: &str = "▀";
+    pub const QUADRANT_BOTTOM_HALF: &str = "▄";
+    pub const QUADRANT_LEFT_HALF: &str = "▌";
+    pub const QUADRANT_RIGHT_HALF: &str = "▐";
+    pub const QUADRANT_TOP_LEFT_BOTTOM_LEFT_BOTTOM_RIGHT: &str = "▙";
+    pub const QUADRANT_TOP_LEFT_TOP_RIGHT_BOTTOM_LEFT: &str = "▛";
+    pub const QUADRANT_TOP_LEFT_TOP_RIGHT_BOTTOM_RIGHT: &str = "▜";
+    pub const QUADRANT_TOP_RIGHT_BOTTOM_LEFT_BOTTOM_RIGHT: &str = "▟";
+    pub const QUADRANT_TOP_LEFT_BOTTOM_RIGHT: &str = "▚";
+    pub const QUADRANT_TOP_RIGHT_BOTTOM_LEFT: &str = "▞";
+    pub const QUADRANT_BLOCK: &str = "█";
+
+    #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
     pub struct Set {
         pub vertical: &'static str,
         pub horizontal: &'static str,
@@ -226,6 +242,53 @@ pub mod line {
         horizontal_down: THICK_HORIZONTAL_DOWN,
         horizontal_up: THICK_HORIZONTAL_UP,
         cross: THICK_CROSS,
+    };
+
+    /// Quadrant used for setting a border outside a block by one half cell "pixel".
+    ///
+    /// ```text
+    /// ▛▀▀▜
+    /// ▌  ▐
+    /// ▙▄▄▟
+    /// ```
+    ///
+    /// Note: that vertical_{left,right} and horizontal_{up,down} are used for creating the
+    /// borders, and so while the lines above are e.g. "┻" and "┳", the lines below are "▄" and
+    /// "▀". This lets us use these for both the inside and outside of a block. (TODO make an
+    /// actual border_set type instead of reusing line::Set)
+    pub const QUADRANT_OUTSIDE: Set = Set {
+        vertical: QUADRANT_BLOCK,
+        horizontal: QUADRANT_BLOCK,
+        top_right: QUADRANT_TOP_LEFT_TOP_RIGHT_BOTTOM_RIGHT,
+        top_left: QUADRANT_TOP_LEFT_TOP_RIGHT_BOTTOM_LEFT,
+        bottom_right: QUADRANT_TOP_RIGHT_BOTTOM_LEFT_BOTTOM_RIGHT,
+        bottom_left: QUADRANT_TOP_LEFT_BOTTOM_LEFT_BOTTOM_RIGHT,
+        vertical_left: QUADRANT_LEFT_HALF,
+        vertical_right: QUADRANT_RIGHT_HALF,
+        horizontal_down: QUADRANT_BOTTOM_HALF,
+        horizontal_up: QUADRANT_TOP_HALF,
+        cross: QUADRANT_BLOCK,
+    };
+
+    /// Quadrant used for setting a border inside a block by one half cell "pixel".
+    ///
+    /// ```text
+    /// ▗▄▄▖
+    /// ▐  ▌
+    /// ▝▀▀▘
+    /// ```
+    pub const QUADRANT_INSIDE: Set = Set {
+        vertical: QUADRANT_BLOCK,
+        horizontal: QUADRANT_BLOCK,
+        top_right: QUADRANT_BOTTOM_LEFT,
+        top_left: QUADRANT_BOTTOM_RIGHT,
+        bottom_right: QUADRANT_TOP_LEFT,
+        bottom_left: QUADRANT_TOP_RIGHT,
+        vertical_left: QUADRANT_RIGHT_HALF,
+        vertical_right: QUADRANT_LEFT_HALF,
+        horizontal_down: QUADRANT_TOP_HALF,
+        horizontal_up: QUADRANT_BOTTOM_HALF,
+        cross: QUADRANT_BLOCK,
     };
 }
 
