@@ -39,7 +39,8 @@ pub struct Label<'a> {
 #[derive(Debug, Default, Clone, Eq, PartialEq, Hash)]
 struct Layer {
     string: String,
-    colors: Vec<Color>,
+    fg_colors: Vec<Color>,
+    bg_colors: Vec<Color>,
 }
 
 trait Grid: Debug {
@@ -90,7 +91,8 @@ impl Grid for BrailleGrid {
     fn save(&self) -> Layer {
         Layer {
             string: String::from_utf16(&self.cells).unwrap(),
-            colors: self.colors.clone(),
+            fg_colors: self.colors.clone(),
+            bg_colors: vec![],
         }
     }
 
@@ -152,7 +154,8 @@ impl Grid for CharGrid {
     fn save(&self) -> Layer {
         Layer {
             string: self.cells.iter().collect(),
-            colors: self.colors.clone(),
+            fg_colors: self.colors.clone(),
+            bg_colors: vec![],
         }
     }
 
@@ -172,6 +175,74 @@ impl Grid for CharGrid {
         }
         if let Some(c) = self.colors.get_mut(index) {
             *c = color;
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone, Eq, PartialEq, Hash)]
+struct HalfBlockGrid {
+    width: u16,
+    height: u16,
+    cells: Vec<char>,
+    fg_colors: Vec<Color>,
+    bg_colors: Vec<Color>,
+}
+
+impl HalfBlockGrid {
+    fn new(width: u16, height: u16) -> HalfBlockGrid {
+        let length = usize::from(width * height);
+        HalfBlockGrid {
+            width,
+            height,
+            cells: vec![' '; length],
+            fg_colors: vec![Color::Reset; length],
+            bg_colors: vec![Color::Reset; length],
+        }
+    }
+}
+
+impl Grid for HalfBlockGrid {
+    fn width(&self) -> u16 {
+        self.width
+    }
+
+    fn height(&self) -> u16 {
+        self.height
+    }
+
+    fn resolution(&self) -> (f64, f64) {
+        (
+            f64::from(self.width) - 1.0,
+            f64::from(self.height) * 2.0 - 1.0,
+        )
+    }
+
+    fn save(&self) -> Layer {
+        Layer {
+            string: self.cells.iter().collect(),
+            fg_colors: self.fg_colors.clone(),
+            bg_colors: self.bg_colors.clone(),
+        }
+    }
+
+    fn reset(&mut self) {
+        self.cells.fill(' ');
+        self.fg_colors.fill_with(Default::default);
+        self.bg_colors.fill_with(Default::default);
+    }
+
+    fn paint(&mut self, x: usize, y: usize, color: Color) {
+        let index = y / 2 * self.width as usize + x;
+        // because we are using half blocks, we need to check if we are on an even or odd line
+        // to know if we need to paint the upper or lower half of the block. Even lines are
+        // the upper half and odd lines are the lower half. We just use the upper block for
+        // both cases and change the color of the background or foreground.
+        if y % 2 == 0 {
+            self.cells[index] = symbols::half_block::UPPER;
+            self.fg_colors[index] = color;
+        } else {
+            self.cells[index] = symbols::half_block::UPPER;
+            self.bg_colors[index] = color;
         }
     }
 }
@@ -272,6 +343,7 @@ impl<'a> Context<'a> {
             symbols::Marker::Block => Box::new(CharGrid::new(width, height, block)),
             symbols::Marker::Bar => Box::new(CharGrid::new(width, height, bar)),
             symbols::Marker::Braille => Box::new(BrailleGrid::new(width, height)),
+            symbols::Marker::HalfBlock => Box::new(HalfBlockGrid::new(width, height)),
         };
         Context {
             x_bounds,
@@ -484,17 +556,17 @@ where
 
         // Retrieve painted points for each layer
         for layer in ctx.layers {
-            for (i, (ch, color)) in layer
-                .string
-                .chars()
-                .zip(layer.colors.into_iter())
-                .enumerate()
-            {
+            let chars = layer.string.chars();
+            for (index, (ch, fg)) in chars.zip(layer.fg_colors).enumerate() {
                 if ch != ' ' && ch != '\u{2800}' {
-                    let (x, y) = (i % width, i / width);
-                    buf.get_mut(x as u16 + canvas_area.left(), y as u16 + canvas_area.top())
-                        .set_char(ch)
-                        .set_fg(color);
+                    let (x, y) = (
+                        (index % width) as u16 + canvas_area.left(),
+                        (index / width) as u16 + canvas_area.top(),
+                    );
+                    let cell = buf.get_mut(x, y).set_char(ch).set_fg(fg);
+                    if let Some(bg) = layer.bg_colors.get(index) {
+                        cell.set_bg(*bg);
+                    }
                 }
             }
         }

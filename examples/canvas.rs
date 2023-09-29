@@ -37,11 +37,11 @@ impl App {
                 y: 30.0,
                 width: 10.0,
                 height: 10.0,
-                color: Color::Yellow,
+                color: Color::Blue,
             },
             playground: Rect::new(10, 10, 100, 100),
-            vx: 1.0,
-            vy: 1.0,
+            vx: 0.1,
+            vy: 0.1,
             dir_x: true,
             dir_y: true,
             tick_count: 0,
@@ -51,13 +51,14 @@ impl App {
 
     fn on_tick(&mut self) {
         self.tick_count += 1;
-        // only change marker every 4 ticks (1s) to avoid stroboscopic effect
-        if (self.tick_count % 4) == 0 {
+        // only change marker every 60 ticks (3s) to avoid stroboscopic effect
+        if (self.tick_count % 180) == 0 {
             self.marker = match self.marker {
-                Marker::Dot => Marker::Block,
-                Marker::Block => Marker::Bar,
-                Marker::Bar => Marker::Braille,
-                Marker::Braille => Marker::Dot,
+                Marker::Dot => Marker::Braille,
+                Marker::Braille => Marker::Block,
+                Marker::Block => Marker::HalfBlock,
+                Marker::HalfBlock => Marker::Bar,
+                Marker::Bar => Marker::Dot,
             };
         }
         if self.ball.x < self.playground.left() as f64
@@ -94,7 +95,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut terminal = Terminal::new(backend)?;
 
     // create app and run it
-    let tick_rate = Duration::from_millis(250);
+    let tick_rate = Duration::from_millis(16);
     let app = App::new();
     let res = run_app(&mut terminal, app, tick_rate);
 
@@ -166,7 +167,7 @@ fn ui(f: &mut Frame, app: &App) {
         .marker(app.marker)
         .paint(|ctx| {
             ctx.draw(&Map {
-                color: Color::White,
+                color: Color::Green,
                 resolution: MapResolution::High,
             });
             ctx.print(app.x, -app.y, "You are here".yellow());
@@ -174,6 +175,12 @@ fn ui(f: &mut Frame, app: &App) {
         .x_bounds([-180.0, 180.0])
         .y_bounds([-90.0, 90.0]);
     f.render_widget(canvas, chunks[0]);
+
+    let right_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+        .split(chunks[1]);
+
     let canvas = Canvas::default()
         .block(Block::default().borders(Borders::ALL).title("Pong"))
         .marker(app.marker)
@@ -182,5 +189,40 @@ fn ui(f: &mut Frame, app: &App) {
         })
         .x_bounds([10.0, 110.0])
         .y_bounds([10.0, 110.0]);
-    f.render_widget(canvas, chunks[1]);
+    f.render_widget(canvas, right_layout[0]);
+
+    let area = right_layout[1];
+    let (left, right, bottom, top) = (0.0, area.width as f64, 0.0, area.height as f64 * 2.0 - 4.0);
+    let canvas = Canvas::default()
+        .block(Block::default().borders(Borders::ALL).title("Rects"))
+        .marker(app.marker)
+        .x_bounds([left, right])
+        .y_bounds([bottom, top])
+        .paint(|ctx| {
+            for i in 0..=11 as usize {
+                ctx.draw(&Rectangle {
+                    x: (i * i + 3 * i) as f64 / 2.0 + 2.0,
+                    y: 2.0,
+                    width: i as f64,
+                    height: i as f64,
+                    color: Color::Red,
+                });
+                ctx.draw(&Rectangle {
+                    x: (i * i + 3 * i) as f64 / 2.0 + 2.0,
+                    y: 21.0,
+                    width: i as f64,
+                    height: i as f64,
+                    color: Color::Blue,
+                });
+            }
+            for i in 0..100 {
+                if i % 10 != 0 {
+                    ctx.print(i as f64 + 1.0, 0.0, format!("{i}", i = i % 10));
+                }
+                if i % 2 == 0 && i % 10 != 0 {
+                    ctx.print(0.0, i as f64, format!("{i}", i = i % 10));
+                }
+            }
+        });
+    f.render_widget(canvas, right_layout[1]);
 }
