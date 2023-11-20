@@ -3,21 +3,65 @@ use std::borrow::Cow;
 use super::{Span, Style, StyledGrapheme};
 use crate::layout::Alignment;
 
+/// A line of text, consisting of one or more [`Span`]s.
+///
+/// [`Line`]s are used wherever text is displayed in the terminal and represent a single line of
+/// text. When a [`Line`] is rendered, it is rendered as a single line of text, with each [`Span`]
+/// being rendered in order (left to right). The [`Style`] of each [`Span`] will be combined with
+/// the [`Style`] of the [`Line`], so that each [`Span`] can be styled individually, and also
+/// inherit the style of the [`Line`].
+///
+/// [`Line`]s are created from [`Span`]s, [`String`]s, and [`&str`]s. They can be styled with a
+/// [`Style`], and can have a target [`Alignment`].
+///
+/// # Line Style Compatibility
+///
+/// The [`Style`] of a [`Line`] was added in v0.25.0. Prior to that, the style of a line was
+/// determined only by the style of each [`Span`] contained in the line. For this reason, this
+/// field may not be supported yet by all widgets (outside of the `ratatui` crate itself).
+///
+/// # Examples
+///
+/// ```rust
+/// # use ratatui::prelude::*;
+/// Line::raw("test content");
+/// Line::styled("test content", Style::new().yellow());
+/// Line::from(vec![
+///     Span::styled("My", Style::default().fg(Color::Yellow)),
+///     Span::raw(" text"),
+/// ]);
+/// ```
+///
+/// Newlines are ignored when creating a [`Line`] from a [`String`] or [`&str`]:
 #[derive(Debug, Default, Clone, Eq, PartialEq, Hash)]
+#[non_exhaustive]
 pub struct Line<'a> {
     pub spans: Vec<Span<'a>>,
+    pub style: Style,
     pub alignment: Option<Alignment>,
 }
 
+/// Constructor methods
 impl<'a> Line<'a> {
     /// Create a line with the default style.
+    ///
+    /// `content` can be any type that is convertible to [`Cow<str>`] (e.g. [`&str`], [`String`],
+    /// [`Cow<str>`], or your own type that implements [`Into<Cow<str>>`]).
+    ///
+    /// A [`Line`] can specify a [`Style`], which will be applied before the style of each [`Span`]
+    /// in the line.
+    ///
+    /// Any newlines in the content are removed.
     ///
     /// # Examples
     ///
     /// ```rust
     /// # use ratatui::prelude::*;
+    /// # use std::borrow::Cow;
+    ///
     /// Line::raw("test content");
     /// Line::raw(String::from("test content"));
+    /// Line::raw(Cow::from("test content"));
     /// ```
     pub fn raw<T>(content: T) -> Line<'a>
     where
@@ -29,11 +73,11 @@ impl<'a> Line<'a> {
                 .lines()
                 .map(|v| Span::raw(v.to_string()))
                 .collect(),
-            alignment: None,
+            ..Default::default()
         }
     }
 
-    /// Create a line with a style.
+    /// Create a line with the given style.
     ///
     /// # Examples
     ///
@@ -47,12 +91,90 @@ impl<'a> Line<'a> {
     where
         T: Into<Cow<'a, str>>,
     {
-        Line::from(Span::styled(content, style))
+        Line {
+            spans: content
+                .into()
+                .lines()
+                .map(|v| Span::raw(v.to_string()))
+                .collect(),
+            style,
+            ..Default::default()
+        }
+    }
+}
+
+/// # Builder methods
+///
+/// These methods can be used to construct or modify an existing Line. These can be chained.
+///
+/// # Examples
+///
+/// ```
+/// # use ratatui::prelude::*;
+/// let line = Line::default()
+///     .spans(vec!["hello".red(), "world".green()])
+///     .alignment(Alignment::Center)
+///     .style(Style::new().bold());
+/// ````
+impl<'a> Line<'a> {
+    /// Sets the spans of this line of text.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use ratatui::prelude::*;
+    /// let line = Line::default().spans(vec![
+    ///     Span::styled("My", Style::default().fg(Color::Yellow)),
+    ///     Span::raw(" text"),
+    /// ]);
+    /// ```
+    pub fn spans<T: Into<Vec<Span<'a>>>>(mut self, spans: T) -> Self {
+        self.spans = spans.into();
+        self
     }
 
+    /// Sets the target alignment for this line of text.
+    ///
+    /// Defaults to [`None`], meaning the alignment is determined by the rendering widget.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use ratatui::prelude::*;
+    /// let mut line = Line::from("Hi, what's up?");
+    /// assert_eq!(None, line.alignment);
+    /// assert_eq!(Some(Alignment::Right), line.alignment(Alignment::Right).alignment)
+    /// ```
+    pub fn alignment<T: Into<Alignment>>(mut self, alignment: T) -> Self {
+        self.alignment = Some(alignment.into());
+        self
+    }
+
+    /// Sets the style of this line of text.
+    ///
+    /// Defaults to [`Style::default()`].
+    ///
+    /// Note: This field was added in v0.25.0. Prior to that, the style of a line was determined
+    /// only by the style of each [`Span`] contained in the line. For this reason, this field may
+    /// not be supported by all widgets (outside of the `ratatui` crate itself).
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use ratatui::prelude::*;
+    /// let mut line = Line::from("foo").style(Style::new().red());
+    /// ```
+    pub fn style<T: Into<Style>>(mut self, style: T) -> Self {
+        self.style = style.into();
+        self
+    }
+}
+
+/// Other methods
+impl Line<'_> {
     /// Returns the width of the underlying string.
     ///
-    /// ## Examples
+    /// # Examples
     ///
     /// ```rust
     /// # use ratatui::prelude::*;
@@ -66,41 +188,13 @@ impl<'a> Line<'a> {
         self.spans.iter().map(Span::width).sum()
     }
 
-    /// Returns an iterator over the graphemes held by this line.
-    ///
-    /// `base_style` is the [`Style`] that will be patched with each grapheme [`Style`] to get
-    /// the resulting [`Style`].
-    ///
-    /// ## Examples
-    ///
-    /// ```rust
-    /// use std::iter::Iterator;
-    /// use ratatui::{prelude::*, text::StyledGrapheme};
-    ///
-    /// let line = Line::styled("Text", Style::default().fg(Color::Yellow));
-    /// let style = Style::default().fg(Color::Green).bg(Color::Black);
-    /// assert_eq!(
-    ///     line.styled_graphemes(style).collect::<Vec<StyledGrapheme>>(),
-    ///     vec![
-    ///         StyledGrapheme::new("T", Style::default().fg(Color::Yellow).bg(Color::Black)),
-    ///         StyledGrapheme::new("e", Style::default().fg(Color::Yellow).bg(Color::Black)),
-    ///         StyledGrapheme::new("x", Style::default().fg(Color::Yellow).bg(Color::Black)),
-    ///         StyledGrapheme::new("t", Style::default().fg(Color::Yellow).bg(Color::Black)),
-    ///     ]
-    /// );
-    /// ```
-    pub fn styled_graphemes(
-        &'a self,
-        base_style: Style,
-    ) -> impl Iterator<Item = StyledGrapheme<'a>> {
-        self.spans
-            .iter()
-            .flat_map(move |span| span.styled_graphemes(base_style))
-    }
-
     /// Patches the style of each Span in an existing Line, adding modifiers from the given style.
     ///
-    /// ## Examples
+    /// This is useful for when you want to apply a style to a line that already has some styling.
+    /// In contrast to [`Line::style`], this method will not overwrite the existing style, but
+    /// instead will add the given style's modifiers to the existing style of each `Span`.
+    ///
+    /// # Examples
     ///
     /// ```rust
     /// # use ratatui::prelude::*;
@@ -128,7 +222,7 @@ impl<'a> Line<'a> {
     /// Resets the style of each Span in the Line.
     /// Equivalent to calling `patch_style(Style::reset())`.
     ///
-    /// ## Examples
+    /// # Examples
     ///
     /// ```rust
     /// # use ratatui::prelude::*;
@@ -147,22 +241,38 @@ impl<'a> Line<'a> {
         }
     }
 
-    /// Sets the target alignment for this line of text.
-    /// Defaults to: [`None`], meaning the alignment is determined by the rendering widget.
+    /// Returns an iterator over the graphemes held by this line.
     ///
-    /// ## Examples
+    /// `base_style` is the [`Style`] that will be patched with each grapheme [`Style`] to get
+    /// the resulting [`Style`].
+    ///
+    /// # Examples
     ///
     /// ```rust
-    /// # use ratatui::prelude::*;
-    /// let mut line = Line::from("Hi, what's up?");
-    /// assert_eq!(None, line.alignment);
-    /// assert_eq!(Some(Alignment::Right), line.alignment(Alignment::Right).alignment)
+    /// use std::iter::Iterator;
+    /// use ratatui::{prelude::*, text::StyledGrapheme};
+    ///
+    /// let style = Style::new().green().on_black();
+    /// let line = Line::styled("Text", Style::new().yellow());
+    /// let graphemes = line.styled_graphemes(style).collect::<Vec<StyledGrapheme>>();
     /// ```
-    pub fn alignment(self, alignment: Alignment) -> Self {
-        Self {
-            alignment: Some(alignment),
-            ..self
-        }
+    pub fn styled_graphemes(&self, base_style: Style) -> impl Iterator<Item = StyledGrapheme> {
+        self.spans
+            .iter()
+            .flat_map(move |span| span.styled_graphemes(base_style))
+    }
+
+    pub fn styled_spans(&self) -> impl Iterator<Item = Span> {
+        self.spans.iter().cloned().map(|s| s.style(self.style))
+    }
+}
+
+impl<'a> IntoIterator for Line<'a> {
+    type Item = Span<'a>;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.spans.into_iter()
     }
 }
 

@@ -10,6 +10,10 @@ use crate::style::Style;
 /// or via the [`Text::raw`] and [`Text::styled`] methods. Helpfully, [`Text`] also implements
 /// [`core::iter::Extend`] which enables the concatenation of several [`Text`] blocks.
 ///
+/// A [`Text`] can also be styled, which applies the given style before each line. This is useful
+/// for styling the entire block of text at once, but having the ability to override the style of
+/// individual lines.
+///
 /// ```rust
 /// use ratatui::prelude::*;
 ///
@@ -28,21 +32,36 @@ use crate::style::Style;
 /// assert_eq!(6, text.height());
 /// ```
 #[derive(Debug, Default, Clone, Eq, PartialEq, Hash)]
+#[non_exhaustive]
 pub struct Text<'a> {
     pub lines: Vec<Line<'a>>,
+    pub style: Style,
 }
 
+/// # Constructors
+///
+/// [`Text`] can be constructed using one of the many `From` implementations or via the
+/// [`Text::raw`] and [`Text::styled`] methods.
+///
+/// # Examples
+///
+/// ```rust
+/// # use ratatui::prelude::*;
+/// Text::raw("The first line\nThe second line");
+/// Text::raw(String::from("The first line\nThe second line"));
+/// Text::styled("The first line\nThe second line", Style::new().red().bold());
+/// ```
 impl<'a> Text<'a> {
     /// Create some text (potentially multiple lines) with no style.
     ///
-    /// ## Examples
+    /// # Examples
     ///
     /// ```rust
     /// # use ratatui::prelude::*;
     /// Text::raw("The first line\nThe second line");
     /// Text::raw(String::from("The first line\nThe second line"));
     /// ```
-    pub fn raw<T>(content: T) -> Text<'a>
+    pub fn raw<T>(content: T) -> Self
     where
         T: Into<Cow<'a, str>>,
     {
@@ -58,6 +77,12 @@ impl<'a> Text<'a> {
 
     /// Create some text (potentially multiple lines) with a style.
     ///
+    /// Note: this method was created before Text had a style field. As such, the style is stored
+    /// in both the [`Text`] and in each [`Line`]. This means that if you change the style of the
+    /// [`Text`] after construction, the style of each [`Line`] will not be updated. To update the
+    /// style of each [`Line`], use [`Text::patch_style`] or [`Text::reset_style`], or construct
+    /// the [`Text`] with the lines already styled.
+    ///
     /// # Examples
     ///
     /// ```rust
@@ -66,41 +91,57 @@ impl<'a> Text<'a> {
     /// Text::styled("The first line\nThe second line", style);
     /// Text::styled(String::from("The first line\nThe second line"), style);
     /// ```
-    pub fn styled<T>(content: T, style: Style) -> Text<'a>
+    pub fn styled<T>(content: T, style: Style) -> Self
     where
         T: Into<Cow<'a, str>>,
     {
-        let mut text = Text::raw(content);
-        text.patch_style(style);
-        text
+        let mut raw = Text::raw(content);
+        raw.patch_style(style);
+        raw.style(style)
     }
+}
 
-    /// Returns the max width of all the lines.
+/// # Builder methods
+///
+/// These methods can be used to construct or modify an existing [`Text`]. These can be chained.
+impl<'a> Text<'a> {
+    /// Sets the lines of the [`Text`].
     ///
-    /// ## Examples
+    /// # Examples
     ///
     /// ```rust
     /// # use ratatui::prelude::*;
-    /// let text = Text::from("The first line\nThe second line");
-    /// assert_eq!(15, text.width());
+    /// let text = Text::default().lines(vec![
+    ///     Line::from("The first line"),
+    ///     Line::from("The second line"),
+    /// ]);
     /// ```
-    pub fn width(&self) -> usize {
-        self.lines.iter().map(Line::width).max().unwrap_or_default()
+    pub fn lines<T>(mut self, lines: T) -> Self
+    where
+        T: IntoIterator<Item = Line<'a>>,
+    {
+        self.lines = lines.into_iter().collect();
+        self
     }
 
-    /// Returns the height.
+    /// Sets the style of the [`Text`].
     ///
-    /// ## Examples
+    /// # Examples
     ///
     /// ```rust
     /// # use ratatui::prelude::*;
-    /// let text = Text::from("The first line\nThe second line");
-    /// assert_eq!(2, text.height());
+    /// let text = Text::default().style(Style::new().red().bold());
     /// ```
-    pub fn height(&self) -> usize {
-        self.lines.len()
+    pub fn style<T>(mut self, style: T) -> Self
+    where
+        T: Into<Style>,
+    {
+        self.style = style.into();
+        self
     }
+}
 
+impl Text<'_> {
     /// Patches the style of each line in an existing Text, adding modifiers from the given style.
     ///
     /// # Examples
@@ -124,7 +165,7 @@ impl<'a> Text<'a> {
     /// Resets the style of the Text.
     /// Equivalent to calling `patch_style(Style::reset())`.
     ///
-    /// ## Examples
+    /// # Examples
     ///
     /// ```rust
     /// # use ratatui::prelude::*;
@@ -142,6 +183,51 @@ impl<'a> Text<'a> {
         for line in &mut self.lines {
             line.reset_style();
         }
+    }
+
+    /// Returns the max width of all the lines.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use ratatui::prelude::*;
+    /// let text = Text::from("The first line\nThe second line");
+    /// assert_eq!(15, text.width());
+    /// ```
+    pub fn width(&self) -> usize {
+        self.lines.iter().map(Line::width).max().unwrap_or_default()
+    }
+
+    /// Returns the height of the text, i.e. the number of lines.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use ratatui::prelude::*;
+    /// let text = Text::from("The first line\nThe second line");
+    /// assert_eq!(2, text.height());
+    /// ```
+    pub fn height(&self) -> usize {
+        self.lines.len()
+    }
+
+    /// Returns an iterator over the lines of the text.
+    ///
+    /// Each line is styled with the style of the text.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use ratatui::prelude::*;
+    /// let style = Style::new().yellow().italic();
+    /// let text = Text::styled("The first line\nThe second line", style);
+    /// let styled_lines = text.styled_lines().collect::<Vec<_>>();
+    /// ````
+    pub fn styled_lines(&self) -> impl Iterator<Item = Line> {
+        self.lines
+            .iter()
+            .cloned()
+            .map(|line| line.style(self.style))
     }
 }
 
@@ -167,19 +253,26 @@ impl<'a> From<Span<'a>> for Text<'a> {
     fn from(span: Span<'a>) -> Text<'a> {
         Text {
             lines: vec![Line::from(span)],
+            ..Default::default()
         }
     }
 }
 
 impl<'a> From<Line<'a>> for Text<'a> {
     fn from(line: Line<'a>) -> Text<'a> {
-        Text { lines: vec![line] }
+        Text {
+            lines: vec![line],
+            ..Default::default()
+        }
     }
 }
 
 impl<'a> From<Vec<Line<'a>>> for Text<'a> {
     fn from(lines: Vec<Line<'a>>) -> Text<'a> {
-        Text { lines }
+        Text {
+            lines,
+            ..Default::default()
+        }
     }
 }
 
