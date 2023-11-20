@@ -364,6 +364,271 @@ impl Style {
     }
 }
 
+/// Style constructor shortcuts.
+///
+/// These make specifying styles less verbose when using the `Style` struct.
+///
+/// # Example
+///
+/// ```rust
+/// # use ratatui::prelude::*;
+/// # use ratatui::widgets::*;
+/// assert_eq!("hello".red().style, Style::red());
+/// // instead of
+/// assert_eq!("hello".red().style, Style::new().red());
+/// ```
+impl Style {
+    /// Creates a new style with the foreground color set to black.
+    pub const fn black() -> Self {
+        Self::new().fg(Color::Black)
+    }
+
+    /// Creates a new style with the foreground color set to red.
+    pub const fn red() -> Self {
+        Self::new().fg(Color::Red)
+    }
+
+    /// Creates a new style with the foreground color set to green.
+    pub const fn green() -> Self {
+        Self::new().fg(Color::Green)
+    }
+
+    /// Creates a new style with the foreground color set to yellow.
+    pub const fn yellow() -> Self {
+        Self::new().fg(Color::Yellow)
+    }
+
+    /// Creates a new style with the foreground color set to blue.
+    pub const fn blue() -> Self {
+        Self::new().fg(Color::Blue)
+    }
+
+    /// Creates a new style with the foreground color set to magenta.
+    pub const fn magenta() -> Self {
+        Self::new().fg(Color::Magenta)
+    }
+
+    /// Creates a new style with the foreground color set to cyan.
+    pub const fn cyan() -> Self {
+        Self::new().fg(Color::Cyan)
+    }
+
+    /// Creates a new style with the foreground color set to gray.
+    pub const fn gray() -> Self {
+        Self::new().fg(Color::Gray)
+    }
+
+    /// Creates a new style with the foreground color set to dark gray.
+    pub const fn dark_gray() -> Self {
+        Self::new().fg(Color::DarkGray)
+    }
+
+    /// Creates a new style with the foreground color set to light red.
+    pub const fn light_red() -> Self {
+        Self::new().fg(Color::LightRed)
+    }
+
+    /// Creates a new style with the foreground color set to light green.
+    pub const fn light_green() -> Self {
+        Self::new().fg(Color::LightGreen)
+    }
+
+    /// Creates a new style with the foreground color set to light yellow.
+    pub const fn light_yellow() -> Self {
+        Self::new().fg(Color::LightYellow)
+    }
+
+    /// Creates a new style with the foreground color set to light blue.
+    pub const fn light_blue() -> Self {
+        Self::new().fg(Color::LightBlue)
+    }
+
+    /// Creates a new style with the foreground color set to light magenta.
+    pub const fn light_magenta() -> Self {
+        Self::new().fg(Color::LightMagenta)
+    }
+
+    /// Creates a new style with the foreground color set to light cyan.
+    pub const fn light_cyan() -> Self {
+        Self::new().fg(Color::LightCyan)
+    }
+
+    /// Creates a new style with the foreground color set to white.
+    pub const fn white() -> Self {
+        Self::new().fg(Color::White)
+    }
+
+    /// Creates a new style with the background color set to black.
+    pub const fn on_black(self) -> Self {
+        self.bg(Color::Black)
+    }
+
+    /// Creates a new style with the background color set to red.
+    pub const fn on_red(self) -> Self {
+        self.bg(Color::Red)
+    }
+
+    /// Creates a new style with the background color set to green.
+    pub const fn on_green(self) -> Self {
+        self.bg(Color::Green)
+    }
+
+    /// Creates a new style with the background color set to yellow.
+    pub const fn on_yellow(self) -> Self {
+        self.bg(Color::Yellow)
+    }
+
+    /// Creates a new style with the background color set to blue.
+    pub const fn on_blue(self) -> Self {
+        self.bg(Color::Blue)
+    }
+
+    /// Creates a new style with the background color set to magenta.
+    pub const fn on_magenta(self) -> Self {
+        self.bg(Color::Magenta)
+    }
+
+    /// Creates a new style with the background color set to cyan.
+    pub const fn on_cyan(self) -> Self {
+        self.bg(Color::Cyan)
+    }
+
+    /// Creates a new style with the background color set to gray.
+    pub const fn on_gray(self) -> Self {
+        self.bg(Color::Gray)
+    }
+
+    /// Creates a new style with the background color set to dark gray.
+    pub const fn on_dark_gray(self) -> Self {
+        self.bg(Color::DarkGray)
+    }
+
+    /// Creates a new style with the background color set to light red.
+    pub const fn on_light_red(self) -> Self {
+        self.bg(Color::LightRed)
+    }
+
+    /// Creates a new style with the background color set to light green.
+    pub const fn on_light_green(self) -> Self {
+        self.bg(Color::LightGreen)
+    }
+
+    /// Creates a new style with the background color set to light yellow.
+    pub const fn on_light_yellow(self) -> Self {
+        self.bg(Color::LightYellow)
+    }
+
+    /// Creates a new style with the background color set to light blue.
+    pub const fn on_light_blue(self) -> Self {
+        self.bg(Color::LightBlue)
+    }
+
+    /// Creates a new style with the background color set to light magenta.
+    pub const fn on_light_magenta(self) -> Self {
+        self.bg(Color::LightMagenta)
+    }
+
+    /// Creates a new style with the background color set to light cyan.
+    pub const fn on_light_cyan(self) -> Self {
+        self.bg(Color::LightCyan)
+    }
+
+    /// Creates a new style with the background color set to white.
+    pub const fn on_white(self) -> Self {
+        self.bg(Color::White)
+    }
+
+    /// Creates a new style with a bold modifier.
+    pub const fn bold(self) -> Self {
+        self.add_modifier(Modifier::BOLD)
+    }
+
+    /// Creates a new style with a dim modifier.
+    pub const fn dim(self) -> Self {
+        self.add_modifier(Modifier::DIM)
+    }
+
+    /// Creates a new style with an italic modifier.
+    pub const fn italic(self) -> Self {
+        self.add_modifier(Modifier::ITALIC)
+    }
+
+    /// Creates a new style with an underlined modifier.
+    pub const fn underlined(self) -> Self {
+        self.add_modifier(Modifier::UNDERLINED)
+    }
+
+    /// Creates a new style with a slow blink modifier.
+    pub const fn slow_blink(self) -> Self {
+        self.add_modifier(Modifier::SLOW_BLINK)
+    }
+
+    /// Creates a new style with a rapid blink modifier.
+    pub const fn rapid_blink(self) -> Self {
+        self.add_modifier(Modifier::RAPID_BLINK)
+    }
+
+    /// Creates a new style with a reversed modifier.
+    pub const fn reversed(self) -> Self {
+        self.add_modifier(Modifier::REVERSED)
+    }
+
+    /// Creates a new style with a hidden modifier.
+    pub const fn hidden(self) -> Self {
+        self.add_modifier(Modifier::HIDDEN)
+    }
+
+    /// Creates a new style with a crossed out modifier.
+    pub const fn crossed_out(self) -> Self {
+        self.add_modifier(Modifier::CROSSED_OUT)
+    }
+
+    /// Creates a new style with a bold modifier removed.
+    pub const fn not_bold(self) -> Self {
+        self.remove_modifier(Modifier::BOLD)
+    }
+
+    /// Creates a new style with a dim modifier removed.
+    pub const fn not_dim(self) -> Self {
+        self.remove_modifier(Modifier::DIM)
+    }
+
+    /// Creates a new style with an italic modifier removed.
+    pub const fn not_italic(self) -> Self {
+        self.remove_modifier(Modifier::ITALIC)
+    }
+
+    /// Creates a new style with an underlined modifier removed.
+    pub const fn not_underlined(self) -> Self {
+        self.remove_modifier(Modifier::UNDERLINED)
+    }
+
+    /// Creates a new style with a slow blink modifier removed.
+    pub const fn not_slow_blink(self) -> Self {
+        self.remove_modifier(Modifier::SLOW_BLINK)
+    }
+
+    /// Creates a new style with a rapid blink modifier removed.
+    pub const fn not_rapid_blink(self) -> Self {
+        self.remove_modifier(Modifier::RAPID_BLINK)
+    }
+
+    /// Creates a new style with a reversed modifier removed.
+    pub const fn not_reversed(self) -> Self {
+        self.remove_modifier(Modifier::REVERSED)
+    }
+
+    /// Creates a new style with a hidden modifier removed.
+    pub const fn not_hidden(self) -> Self {
+        self.remove_modifier(Modifier::HIDDEN)
+    }
+
+    /// Creates a new style with a crossed out modifier removed.
+    pub const fn not_crossed_out(self) -> Self {
+        self.remove_modifier(Modifier::CROSSED_OUT)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
