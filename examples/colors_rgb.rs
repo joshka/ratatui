@@ -37,16 +37,19 @@ struct Fps {
     fps: Option<f32>,
 }
 
+#[derive(Debug, Clone)]
 struct AppWidget<'a> {
     title: Paragraph<'a>,
     fps_widget: FpsWidget<'a>,
     rgb_colors_widget: RgbColorsWidget<'a>,
 }
 
+#[derive(Debug, Clone)]
 struct FpsWidget<'a> {
     fps: &'a Fps,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 struct RgbColorsWidget<'a> {
     /// The colors to render - should be double the height of the area
     colors: &'a Vec<Vec<Color>>,

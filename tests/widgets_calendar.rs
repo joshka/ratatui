@@ -11,7 +11,7 @@ use ratatui::{
 };
 use time::{Date, Month};
 
-fn test_render<W: Widget>(widget: W, expected: Buffer, size: (u16, u16)) {
+fn test_render<W: Widget + Clone>(widget: W, expected: Buffer, size: (u16, u16)) {
     let backend = TestBackend::new(size.0, size.1);
     let mut terminal = Terminal::new(backend).unwrap();
 

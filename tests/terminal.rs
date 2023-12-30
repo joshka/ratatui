@@ -5,7 +5,7 @@ use ratatui::{
     backend::{Backend, TestBackend},
     layout::Rect,
     prelude::Buffer,
-    widgets::{Paragraph, Widget},
+    widgets::Paragraph,
     Terminal, TerminalOptions, Viewport,
 };
 

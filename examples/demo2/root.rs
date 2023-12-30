@@ -5,6 +5,7 @@ use ratatui::{prelude::*, widgets::*};
 
 use crate::{tabs::*, AppContext, THEME};
 
+#[derive(Debug, Clone, Copy)]
 pub struct Root<'a> {
     context: &'a AppContext,
 }

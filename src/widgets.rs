@@ -283,3 +283,20 @@ mod tests {
         );
     }
 }
+
+/// A trait that allows to convert a type into a [`Widget`].
+pub trait AsWidget<W: Widget> {
+    fn as_widget(&self) -> W;
+}
+
+/// This is an automatic implementation of `AsWidget` for all types that implement `Widget` and
+/// `Clone`. This makes it possible for old widgets to be used in the new `Frame::render_widget`
+/// method just by implementing `Clone`.
+impl<W> AsWidget<W> for W
+where
+    W: Widget + Clone,
+{
+    fn as_widget(&self) -> Self {
+        self.clone()
+    }
+}

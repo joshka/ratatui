@@ -36,7 +36,7 @@ use crate::{
     backend::{Backend, ClearType},
     buffer::Buffer,
     layout::Rect,
-    widgets::{StatefulWidget, Widget},
+    widgets::{AsWidget, StatefulWidget, Widget},
 };
 
 /// Represents the viewport of the terminal. The viewport is the area of the terminal that is
@@ -609,10 +609,12 @@ impl Frame<'_> {
     /// ```
     ///
     /// [`Layout`]: crate::layout::Layout
-    pub fn render_widget<W>(&mut self, widget: W, area: Rect)
+    pub fn render_widget<I, W>(&mut self, widget: I, area: Rect)
     where
+        I: AsWidget<W>,
         W: Widget,
     {
+        let widget = widget.as_widget();
         widget.render(area, self.buffer);
     }
 

@@ -1294,7 +1294,7 @@ mod tests {
         use crate::{
             assert_buffer_eq,
             prelude::{Constraint::*, *},
-            widgets::{Paragraph, Widget},
+            widgets::Paragraph,
         };
 
         /// Test that the given constraints applied to the given area result in the expected layout.

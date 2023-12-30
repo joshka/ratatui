@@ -7,7 +7,7 @@ use crate::{
     text::{StyledGrapheme, Text},
     widgets::{
         reflow::{LineComposer, LineTruncator, WordWrapper, WrappedLine},
-        Block, Widget,
+        AsWidget, Block, Widget,
     },
 };
 
@@ -55,6 +55,35 @@ pub struct Paragraph<'a> {
     scroll: (u16, u16),
     /// Alignment of the text
     alignment: Alignment,
+}
+
+#[derive(Debug, Default, Clone, Eq, PartialEq, Hash)]
+pub struct ParagraphWidget<'a> {
+    /// A block to wrap the widget in
+    pub block: Option<Block<'a>>,
+    /// Widget style
+    pub style: Style,
+    /// How to wrap the text
+    pub wrap: Option<Wrap>,
+    /// The text to display
+    pub text: Text<'a>,
+    /// Scroll
+    pub scroll: (u16, u16),
+    /// Alignment of the text
+    pub alignment: Alignment,
+}
+
+impl<'a> AsWidget<ParagraphWidget<'a>> for Paragraph<'a> {
+    fn as_widget(&self) -> ParagraphWidget<'a> {
+        ParagraphWidget {
+            block: self.block.clone(),
+            style: self.style,
+            wrap: self.wrap,
+            text: self.text.clone(),
+            scroll: self.scroll,
+            alignment: self.alignment,
+        }
+    }
 }
 
 /// Describes how to wrap text across lines.
@@ -277,9 +306,13 @@ impl<'a> Paragraph<'a> {
             .max()
             .unwrap_or_default()
     }
+
+    pub fn render(&self, area: Rect, buf: &mut Buffer) {
+        self.as_widget().render(area, buf);
+    }
 }
 
-impl<'a> Widget for Paragraph<'a> {
+impl<'a> Widget for ParagraphWidget<'a> {
     fn render(mut self, area: Rect, buf: &mut Buffer) {
         buf.set_style(area, self.style);
         let text_area = match self.block.take() {
@@ -315,7 +348,7 @@ impl<'a> Widget for Paragraph<'a> {
     }
 }
 
-impl<'a> Paragraph<'a> {
+impl<'a> ParagraphWidget<'a> {
     fn render_text<C: LineComposer<'a>>(&self, mut composer: C, area: Rect, buf: &mut Buffer) {
         let mut y = 0;
         while let Some(WrappedLine {

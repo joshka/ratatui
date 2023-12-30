@@ -122,7 +122,7 @@ impl App {
         frame.render_widget(self.boxes_canvas(right_layout[1]), right_layout[1]);
     }
 
-    fn map_canvas(&self) -> impl Widget + '_ {
+    fn map_canvas(&self) -> impl Widget + Clone + '_ {
         Canvas::default()
             .block(Block::default().borders(Borders::ALL).title("World"))
             .marker(self.marker)
@@ -137,7 +137,7 @@ impl App {
             .y_bounds([-90.0, 90.0])
     }
 
-    fn pong_canvas(&self) -> impl Widget + '_ {
+    fn pong_canvas(&self) -> impl Widget + '_ + Clone {
         Canvas::default()
             .block(Block::default().borders(Borders::ALL).title("Pong"))
             .marker(self.marker)
@@ -148,7 +148,7 @@ impl App {
             .y_bounds([10.0, 110.0])
     }
 
-    fn boxes_canvas(&self, area: Rect) -> impl Widget {
+    fn boxes_canvas(&self, area: Rect) -> impl Widget + '_ + Clone {
         let (left, right, bottom, top) =
             (0.0, area.width as f64, 0.0, area.height as f64 * 2.0 - 4.0);
         Canvas::default()
