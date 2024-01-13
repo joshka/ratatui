@@ -4,7 +4,7 @@ use anyhow::{Context, Result};
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use rand::Rng;
 use rand_chacha::rand_core::SeedableRng;
-use ratatui::{layout::Flex, prelude::*, widgets::Widget};
+use ratatui::{buffer::Buffer, layout::Flex, prelude::*, widgets::Widget};
 use unicode_width::UnicodeWidthStr;
 
 use crate::{
@@ -119,7 +119,7 @@ impl App {
 /// delay the start of the animation so it doesn't start immediately
 const DELAY: usize = 300;
 /// higher is means more pixels per frame are modified in the animation
-const SPEED_MULTIPLIER: usize = 20;
+const SPEED_MULTIPLIER: usize = 100;
 /// delay the start of the text animation so it doesn't start immediately after the initial delay
 const TEXT_DELAY: usize = 120;
 
@@ -132,23 +132,60 @@ fn destroy(frame: &mut Frame<'_>) {
 
     let area = frame.size();
     let buf = frame.buffer_mut();
+    let mask_buf = &mut Buffer::empty(area);
+    text(frame_count, area, mask_buf);
+    drip(frame_count, area, buf, mask_buf);
+}
 
-    drip(frame_count, area, buf);
-    text(frame_count, area, buf);
+/// draw some text fading in and out from black to red and back
+fn text(frame_count: usize, area: Rect, buf: &mut Buffer) {
+    // let sub_frame = frame_count.saturating_sub(TEXT_DELAY);
+    // if sub_frame == 0 {
+    //     return;
+    // }
+    // // ramp red component brightness up and down 0..256..128
+    // let red = if sub_frame < 256 {
+    //     sub_frame
+    // } else {
+    //     512_usize.saturating_sub(sub_frame).clamp(128, 255)
+    // };
+    // let color = Color::Rgb(red as u8, 0, 0); // a shade of red
+
+    let line1 = "RATATUI";
+    let big_text = BigTextBuilder::default()
+        .lines([line1.into()])
+        .pixel_size(PixelSize::Full)
+        // .style(Style::new().fg(color))
+        .build()
+        .unwrap();
+
+    // the font size is 8x8 for each character and we have 1 line
+    let area = centered_rect(area, line1.width() as u16 * 8, 1 * 8);
+    big_text.render(area, buf);
 }
 
 /// Move a bunch of random pixels down one row.
 ///
 /// Each pick some random pixels and move them each down one row. This is a very inefficient way to
 /// do this, but it works well enough for this demo.
-fn drip(frame_count: usize, area: Rect, buf: &mut Buffer) {
+fn drip(frame_count: usize, area: Rect, buf: &mut Buffer, mask_buf: &mut Buffer) {
     // a seeded rng as we have to move the same random pixels each frame
     let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(10);
     let pixel_count = frame_count * SPEED_MULTIPLIER;
     for _ in 0..pixel_count {
         let src_x = rng.gen_range(0..area.width);
         let src_y = rng.gen_range(0..area.height - 1);
-
+        let mask_cell = mask_buf.get_mut(src_x, src_y);
+        let source_cell = buf.get_mut(src_x, src_y);
+        // skip this pixel if it's in the mask
+        let cloned_cell = source_cell.clone();
+        if mask_cell.symbol() != " ".to_string() {
+            source_cell.reset();
+            source_cell
+                .set_symbol(mask_cell.symbol())
+                .set_fg(Color::Rgb(255, 128, 64));
+            continue;
+        }
         let (dest_x, dest_y) = if rng.gen_ratio(1, 100) {
             // move the pixel to a random location about 1% of the time
             (
@@ -160,39 +197,14 @@ fn drip(frame_count: usize, area: Rect, buf: &mut Buffer) {
             // otherwise move the pixel down a row
             (src_x, src_y.saturating_add(1).min(area.bottom() - 1))
         };
-        // copy the cell to the new location
-        let source_cell = buf.get_mut(src_x, src_y).clone();
         let dest_cell = buf.get_mut(dest_x, dest_y);
-        *dest_cell = source_cell;
+        let mask_cell = mask_buf.get_mut(dest_x, dest_y);
+        if mask_cell.symbol() != " ".to_string() {
+            continue;
+        }
+        // copy the cell to the new location
+        *dest_cell = cloned_cell;
     }
-}
-
-/// draw some text fading in and out from black to red and back
-fn text(frame_count: usize, area: Rect, buf: &mut Buffer) {
-    let sub_frame = frame_count.saturating_sub(TEXT_DELAY);
-    if sub_frame == 0 {
-        return;
-    }
-    // ramp red component brightness up and down 0..256..128
-    let red = if sub_frame < 256 {
-        sub_frame
-    } else {
-        512_usize.saturating_sub(sub_frame).clamp(128, 255)
-    };
-    let color = Color::Rgb(red as u8, 0, 0); // a shade of red
-
-    let line1 = "DESTROY";
-    let line2 = "RATATUI";
-    let big_text = BigTextBuilder::default()
-        .lines([line1.into(), line2.into()])
-        .pixel_size(PixelSize::Full)
-        .style(Style::new().fg(color))
-        .build()
-        .unwrap();
-
-    // the font size is 8x8 for each character and we have 2 lines
-    let area = centered_rect(area, line1.width() as u16 * 8, 2 * 8);
-    big_text.render(area, buf);
 }
 
 /// a centered rect of the given size
