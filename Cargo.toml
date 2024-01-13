@@ -1,6 +1,6 @@
 [package]
 name = "ratatui"
-version = "0.25.0" # crate version
+version = "0.26.0-alpha.1" # crate version
 authors = ["Florian Dehau <work@fdehau.com>", "The Ratatui Developers"]
 description = "A library that's all about cooking up terminal user interfaces"
 documentation = "https://docs.rs/ratatui/latest/ratatui/"
@@ -54,8 +54,10 @@ fakeit = "1.1"
 palette = "0.7.3"
 pretty_assertions = "1.4.0"
 rand = "0.8.5"
+rand_chacha = "0.3.1"
 rstest = "0.18.2"
 serde_json = "1.0.109"
+tui-big-text = { path = "../tui-big-text" }
 
 [features]
 #! The crate provides a set of optional features that can be enabled in your `cargo.toml` file.
