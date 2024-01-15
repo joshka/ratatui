@@ -19,8 +19,8 @@ const EXAMPLE_HEIGHT: u16 = ILLUSTRATION_HEIGHT + SPACER_HEIGHT;
 // priority 1
 const FIXED_COLOR: Color = tailwind::RED.c900;
 // priority 2
-const MIN_COLOR: Color = tailwind::YELLOW.c800;
-const MAX_COLOR: Color = tailwind::YELLOW.c700;
+const MIN_COLOR: Color = tailwind::VIOLET.c900;
+const MAX_COLOR: Color = tailwind::VIOLET.c700;
 // priority 3
 const LENGTH_COLOR: Color = tailwind::TEAL.c950;
 const PERCENTAGE_COLOR: Color = tailwind::TEAL.c900;
