@@ -8,7 +8,7 @@ use crossterm::{
 use ratatui::{
     layout::Constraint::*,
     prelude::*,
-    style::{palette::material, Stylize},
+    style::{palette::material, palette::tailwind, Stylize},
     widgets::*,
 };
 
@@ -17,16 +17,16 @@ const ILLUSTRATION_HEIGHT: u16 = 4;
 const EXAMPLE_HEIGHT: u16 = ILLUSTRATION_HEIGHT + SPACER_HEIGHT;
 
 // priority 1
-const FIXED_COLOR: Color = material::RED.c900;
+const FIXED_COLOR: Color = tailwind::RED.c700;
 // priority 2
-const MIN_COLOR: Color = material::INDIGO.c700;
-const MAX_COLOR: Color = material::INDIGO.c500;
+const MIN_COLOR: Color = tailwind::INDIGO.c700;
+const MAX_COLOR: Color = tailwind::INDIGO.c500;
 // priority 3
-const LENGTH_COLOR: Color = material::TEAL.c700;
-const PERCENTAGE_COLOR: Color = material::TEAL.c500;
-const RATIO_COLOR: Color = material::TEAL.c300;
+const LENGTH_COLOR: Color = tailwind::TEAL.c700;
+const PERCENTAGE_COLOR: Color = tailwind::TEAL.c500;
+const RATIO_COLOR: Color = tailwind::TEAL.c300;
 // priority 4
-const PROPORTIONAL_COLOR: Color = material::BROWN.c700;
+const PROPORTIONAL_COLOR: Color = tailwind::YELLOW.c700;
 
 fn main() -> Result<(), Box<dyn Error>> {
     // setup terminal
