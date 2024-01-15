@@ -7,8 +7,8 @@ use crossterm::{
 };
 use ratatui::{layout::Constraint::*, prelude::*, style::Stylize, widgets::*};
 
-const SPACER_HEIGHT: u16 = 1;
-const ILLUSTRATION_HEIGHT: u16 = 2;
+const SPACER_HEIGHT: u16 = 0;
+const ILLUSTRATION_HEIGHT: u16 = 4;
 const EXAMPLE_HEIGHT: u16 = ILLUSTRATION_HEIGHT + SPACER_HEIGHT;
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -410,15 +410,11 @@ impl Example {
             Constraint::Max(_) => (Green, White),
             Constraint::Min(_) => (LightGreen, Black),
         };
-        let width_text = format!("{} px", width);
-        let constraint_text = format!("{:?}", constraint);
-        let block = Block::new()
-            .borders(Borders::LEFT | Borders::RIGHT)
-            .border_set(symbols::border::QUADRANT_INSIDE)
+        let text = format!("{} px\n{:?}", width, constraint);
+        let block = Block::bordered()
             .border_style(Style::reset().fg(bg))
-            .style(Style::default().fg(fg).bg(bg))
-            .title(block::Title::from(constraint_text).alignment(Alignment::Center));
-        Paragraph::new(width_text)
+            .style(Style::default().fg(fg).bg(bg));
+        Paragraph::new(text)
             .alignment(Alignment::Center)
             .block(block)
     }
