@@ -22,11 +22,11 @@ const FIXED_COLOR: Color = tailwind::RED.c900;
 const MIN_COLOR: Color = tailwind::VIOLET.c900;
 const MAX_COLOR: Color = tailwind::VIOLET.c700;
 // priority 3
-const LENGTH_COLOR: Color = tailwind::TEAL.c950;
-const PERCENTAGE_COLOR: Color = tailwind::TEAL.c900;
-const RATIO_COLOR: Color = tailwind::TEAL.c700;
+const LENGTH_COLOR: Color = tailwind::SLATE.c700;
+const PERCENTAGE_COLOR: Color = tailwind::SLATE.c800;
+const RATIO_COLOR: Color = tailwind::SLATE.c900;
 // priority 4
-const PROPORTIONAL_COLOR: Color = tailwind::BLUE.c700;
+const PROPORTIONAL_COLOR: Color = tailwind::SLATE.c950;
 
 fn main() -> Result<(), Box<dyn Error>> {
     // setup terminal
