@@ -1192,6 +1192,7 @@ mod tests {
     // test how constraints interact with table column width allocation
     mod column_widths {
         use super::*;
+        use crate::assert_buffer_eq;
 
         /// Construct a a new table with the given constraints, available and selection widths and
         /// tests that the widths match the expected list of (x, width) tuples.
@@ -1481,6 +1482,263 @@ mod tests {
                 .footer(Row::new(vec!["h", "i"]))
                 .column_spacing(0);
             assert_eq!(table.get_columns_widths(10, 0), &[(0, 5), (5, 5)])
+        }
+
+        #[test]
+        fn spacers_priority_unconstrained() {
+            fn test(
+                highlight_spacing: HighlightSpacing,
+                selection: Option<usize>,
+                expected: Buffer,
+            ) {
+                let table = Table::default()
+                    .rows(vec![Row::new(vec!["hello", "world"])])
+                    .highlight_spacing(highlight_spacing)
+                    .highlight_symbol(">>>")
+                    .column_spacing(0);
+                let area = Rect::new(0, 0, 15, 3);
+                let mut buf = Buffer::empty(area);
+                if let Some(s) = selection {
+                    let mut state = TableState::default().with_selected(Some(s));
+                    StatefulWidget::render(table, area, &mut buf, &mut state);
+                    assert_buffer_eq!(buf, expected);
+                } else {
+                    Widget::render(table, area, &mut buf);
+                    assert_buffer_eq!(buf, expected);
+                }
+            }
+
+            // no highlight_symbol rendered ever
+            test(
+                HighlightSpacing::Never,
+                None,
+                Buffer::with_lines(vec![
+                    "hello  world   ", // row 1
+                    "               ", // row 2
+                    "               ", // row 3
+                ]),
+            );
+            // no highlight_symbol rendered because no selection is made
+            test(
+                HighlightSpacing::WhenSelected,
+                None,
+                Buffer::with_lines(vec![
+                    "hello  world   ", // row 1
+                    "               ", // row 2
+                    "               ", // row 3
+                ]),
+            );
+            // highlight_symbol always rendered even no selection is made
+            test(
+                HighlightSpacing::Always,
+                None,
+                Buffer::with_lines(vec![
+                    "   hello  world", // row 1
+                    "               ", // row 2
+                    "               ", // row 3
+                ]),
+            );
+
+            // no highlight_symbol rendered ever
+            test(
+                HighlightSpacing::Never,
+                Some(0),
+                Buffer::with_lines(vec![
+                    "hello  world   ", // row 1
+                    "               ", // row 2
+                    "               ", // row 3
+                ]),
+            );
+            // highlight_symbol rendered because selection is made
+            test(
+                HighlightSpacing::WhenSelected,
+                Some(0),
+                Buffer::with_lines(vec![
+                    ">>>hello  world", // row 1
+                    "               ", // row 2
+                    "               ", // row 3
+                ]),
+            );
+            // no highlight_symbol rendered because no selection is made
+            test(
+                HighlightSpacing::Always,
+                Some(0),
+                Buffer::with_lines(vec![
+                    ">>>hello  world", // row 1
+                    "               ", // row 2
+                    "               ", // row 3
+                ]),
+            );
+        }
+
+        #[test]
+        fn spacers_priority_constrained_with_column_spacing() {
+            fn test(
+                highlight_spacing: HighlightSpacing,
+                selection: Option<usize>,
+                expected: Buffer,
+            ) {
+                let table = Table::default()
+                    .rows(vec![Row::new(vec!["hello", "12345"])])
+                    .highlight_spacing(highlight_spacing)
+                    .highlight_symbol(">>>")
+                    .column_spacing(1);
+                let area = Rect::new(0, 0, 10, 3);
+                let mut buf = Buffer::empty(area);
+                if let Some(s) = selection {
+                    let mut state = TableState::default().with_selected(Some(s));
+                    StatefulWidget::render(table, area, &mut buf, &mut state);
+                    assert_buffer_eq!(buf, expected);
+                } else {
+                    Widget::render(table, area, &mut buf);
+                    assert_buffer_eq!(buf, expected);
+                }
+            }
+
+            // column spacing is prioritized over everything constraint
+            test(
+                HighlightSpacing::Never,
+                None,
+                Buffer::with_lines(vec![
+                    "hello 1234", // row 1
+                    "          ", // row 2
+                    "          ", // row 3
+                ]),
+            );
+            test(
+                HighlightSpacing::WhenSelected,
+                None,
+                Buffer::with_lines(vec![
+                    "hello 1234", // row 1
+                    "          ", // row 2
+                    "          ", // row 3
+                ]),
+            );
+            // highlight_symbol space always allocated
+            // because column widths is calculated after
+            // when column widths are calculated, column spacing is prioritized
+            test(
+                HighlightSpacing::Always,
+                None,
+                Buffer::with_lines(vec![
+                    "   hello 1", // row 1
+                    "          ", // row 2
+                    "          ", // row 3
+                ]),
+            );
+
+            test(
+                HighlightSpacing::Never,
+                Some(0),
+                Buffer::with_lines(vec![
+                    "hello 1234", // row 1
+                    "          ", // row 2
+                    "          ", // row 3
+                ]),
+            );
+            test(
+                HighlightSpacing::WhenSelected,
+                Some(0),
+                Buffer::with_lines(vec![
+                    ">>>hello 1", // row 1
+                    "          ", // row 2
+                    "          ", // row 3
+                ]),
+            );
+            test(
+                HighlightSpacing::Always,
+                Some(0),
+                Buffer::with_lines(vec![
+                    ">>>hello 1", // row 1
+                    "          ", // row 2
+                    "          ", // row 3
+                ]),
+            );
+        }
+
+        #[test]
+        fn spacers_priority_constrained_without_column_spacing() {
+            fn test(
+                highlight_spacing: HighlightSpacing,
+                selection: Option<usize>,
+                expected: Buffer,
+            ) {
+                let table = Table::default()
+                    .rows(vec![Row::new(vec!["hello", "world"])])
+                    .widths([Constraint::Fixed(5), Constraint::Fixed(5)])
+                    .highlight_spacing(highlight_spacing)
+                    .highlight_symbol(">>>")
+                    .column_spacing(0);
+                let area = Rect::new(0, 0, 10, 3);
+                let mut buf = Buffer::empty(area);
+                if let Some(s) = selection {
+                    let mut state = TableState::default().with_selected(Some(s));
+                    StatefulWidget::render(table, area, &mut buf, &mut state);
+                    assert_buffer_eq!(buf, expected);
+                } else {
+                    Widget::render(table, area, &mut buf);
+                    assert_buffer_eq!(buf, expected);
+                }
+            }
+
+            test(
+                HighlightSpacing::Never,
+                None,
+                Buffer::with_lines(vec![
+                    "helloworld", // row 1
+                    "          ", // row 2
+                    "          ", // row 3
+                ]),
+            );
+            test(
+                HighlightSpacing::WhenSelected,
+                None,
+                Buffer::with_lines(vec![
+                    "helloworld", // row 1
+                    "          ", // row 2
+                    "          ", // row 3
+                ]),
+            );
+            // highlight symbol spacing is prioritized over all constraints
+            // even if the constraints are fixed length
+            // this is because highlight_symbol column is separated _before_ any of the constraint
+            // widths are calculated
+            test(
+                HighlightSpacing::Always,
+                None,
+                Buffer::with_lines(vec![
+                    "   hellowo", // row 1
+                    "          ", // row 2
+                    "          ", // row 3
+                ]),
+            );
+            test(
+                HighlightSpacing::Never,
+                Some(0),
+                Buffer::with_lines(vec![
+                    "helloworld", // row 1
+                    "          ", // row 2
+                    "          ", // row 3
+                ]),
+            );
+            test(
+                HighlightSpacing::WhenSelected,
+                Some(0),
+                Buffer::with_lines(vec![
+                    ">>>hellowo", // row 1
+                    "          ", // row 2
+                    "          ", // row 3
+                ]),
+            );
+            test(
+                HighlightSpacing::Always,
+                Some(0),
+                Buffer::with_lines(vec![
+                    ">>>hellowo", // row 1
+                    "          ", // row 2
+                    "          ", // row 3
+                ]),
+            );
         }
     }
 
