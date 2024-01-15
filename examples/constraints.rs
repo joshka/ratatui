@@ -5,10 +5,10 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use ratatui::{layout::Constraint::*, prelude::*, widgets::*};
+use ratatui::{layout::Constraint::*, prelude::*, style::Stylize, widgets::*};
 
 const SPACER_HEIGHT: u16 = 1;
-const ILLUSTRATION_HEIGHT: u16 = 3;
+const ILLUSTRATION_HEIGHT: u16 = 2;
 const EXAMPLE_HEIGHT: u16 = ILLUSTRATION_HEIGHT + SPACER_HEIGHT;
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -136,16 +136,17 @@ impl App {
                 ExampleSelection::Max,
             ]
             .iter()
-            .map(|e| format!("{:?}", e)),
+            .map(|example| Line::from(*example)),
         )
         .block(
-            Block::bordered()
+            Block::new()
                 .title("Constraints ".bold())
-                .title(" Use h l or ◄ ► to change tab and j k or ▲ ▼  to scroll".bold()),
+                .title(" Use h l or ◄ ► to change tab and j k or ▲ ▼  to scroll"),
         )
-        .highlight_style(Style::default().yellow().bold())
+        .highlight_style(Style::default().bold().underlined().on_black())
         .select(self.selected_example.selected())
-        .padding("  ", "  ")
+        .padding("", "")
+        .divider(" ")
         .render(area, buf);
     }
 }
@@ -246,6 +247,21 @@ impl ExampleSelection {
             Proportional => 2,
             Min => 5,
             Max => 5,
+        }
+    }
+}
+
+impl From<ExampleSelection> for Line<'static> {
+    fn from(example: ExampleSelection) -> Self {
+        use ExampleSelection::*;
+        match example {
+            Fixed => "  Fixed  ".white().on_red().into(),
+            Length => "  Length  ".black().on_light_red().into(),
+            Percentage => "  Percentage  ".white().on_blue().into(),
+            Ratio => "  Ratio  ".black().on_light_blue().into(),
+            Proportional => "  Proportional  ".white().on_cyan().into(),
+            Min => "  Min  ".white().on_green().into(),
+            Max => "  Max  ".black().on_light_green().into(),
         }
     }
 }
@@ -374,32 +390,36 @@ impl Widget for Example {
             Fixed(ILLUSTRATION_HEIGHT),
             Fixed(SPACER_HEIGHT),
         ]));
-        let blocks = Layout::horizontal(&self.constraints).split(area);
-
-        for (block, constraint) in blocks.iter().zip(&self.constraints) {
-            let text = format!("{} px", block.width);
-            let fg = match constraint {
-                Constraint::Ratio(_, _) => Color::Indexed(1),
-                Constraint::Percentage(_) => Color::Indexed(2),
-                Constraint::Max(_) => Color::Indexed(3),
-                Constraint::Min(_) => Color::Indexed(4),
-                Constraint::Length(_) => Color::Indexed(5),
-                Constraint::Fixed(_) => Color::Indexed(6),
-                Constraint::Proportional(_) => Color::Indexed(7),
-            };
-            self.illustration(*constraint, text, fg).render(*block, buf);
+        let areas = Layout::horizontal(&self.constraints).split(area);
+        for (area, constraint) in areas.iter().zip(&self.constraints) {
+            self.illustration(*constraint, area.width)
+                .render(*area, buf);
         }
     }
 }
 
 impl Example {
-    fn illustration(&self, constraint: Constraint, text: String, fg: Color) -> Paragraph {
-        Paragraph::new(format!("{:?}", constraint))
+    fn illustration(&self, constraint: Constraint, width: u16) -> Paragraph {
+        use Color::*;
+        let (bg, fg) = match constraint {
+            Constraint::Fixed(_) => (Red, White),
+            Constraint::Length(_) => (LightRed, White),
+            Constraint::Percentage(_) => (Blue, White),
+            Constraint::Ratio(_, _) => (LightBlue, Black),
+            Constraint::Proportional(_) => (Cyan, White),
+            Constraint::Max(_) => (Green, White),
+            Constraint::Min(_) => (LightGreen, Black),
+        };
+        let width_text = format!("{} px", width);
+        let constraint_text = format!("{:?}", constraint);
+        let block = Block::new()
+            .borders(Borders::LEFT | Borders::RIGHT)
+            .border_set(symbols::border::QUADRANT_INSIDE)
+            .border_style(Style::reset().fg(bg))
+            .style(Style::default().fg(fg).bg(bg))
+            .title(block::Title::from(constraint_text).alignment(Alignment::Center));
+        Paragraph::new(width_text)
             .alignment(Alignment::Center)
-            .block(
-                Block::bordered()
-                    .style(Style::default().fg(fg))
-                    .title(block::Title::from(text).alignment(Alignment::Center)),
-            )
+            .block(block)
     }
 }
