@@ -26,7 +26,7 @@ const LENGTH_COLOR: Color = tailwind::TEAL.c950;
 const PERCENTAGE_COLOR: Color = tailwind::TEAL.c900;
 const RATIO_COLOR: Color = tailwind::TEAL.c700;
 // priority 4
-const PROPORTIONAL_COLOR: Color = tailwind::YELLOW.c400;
+const PROPORTIONAL_COLOR: Color = tailwind::AMBER.c700;
 
 fn main() -> Result<(), Box<dyn Error>> {
     // setup terminal
