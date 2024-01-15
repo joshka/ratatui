@@ -5,7 +5,12 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use ratatui::{layout::Constraint::*, prelude::*, style::Stylize, widgets::*};
+use ratatui::{
+    layout::Constraint::*,
+    prelude::*,
+    style::{palette::material, Stylize},
+    widgets::*,
+};
 
 const SPACER_HEIGHT: u16 = 0;
 const ILLUSTRATION_HEIGHT: u16 = 4;
@@ -255,13 +260,13 @@ impl From<ExampleSelection> for Line<'static> {
     fn from(example: ExampleSelection) -> Self {
         use ExampleSelection::*;
         match example {
-            Fixed => "  Fixed  ".white().on_red().into(),
-            Length => "  Length  ".black().on_light_red().into(),
-            Percentage => "  Percentage  ".white().on_blue().into(),
-            Ratio => "  Ratio  ".black().on_light_blue().into(),
-            Proportional => "  Proportional  ".white().on_cyan().into(),
-            Min => "  Min  ".white().on_green().into(),
-            Max => "  Max  ".black().on_light_green().into(),
+            Fixed => "  Fixed  ".black().bg(material::RED.c400).into(),
+            Length => "  Length  ".black().bg(material::RED.c300).into(),
+            Percentage => "  Percentage  ".black().bg(material::BLUE.c300).into(),
+            Ratio => "  Ratio  ".black().bg(material::BLUE.c200).into(),
+            Proportional => "  Proportional  ".black().bg(material::BLUE.c400).into(),
+            Min => "  Min  ".white().bg(material::GREEN.c300).into(),
+            Max => "  Max  ".black().bg(material::GREEN.c400).into(),
         }
     }
 }
@@ -400,15 +405,15 @@ impl Widget for Example {
 
 impl Example {
     fn illustration(&self, constraint: Constraint, width: u16) -> Paragraph {
-        use Color::*;
+        use style::palette::material;
         let color = match constraint {
-            Constraint::Fixed(_) => Red,
-            Constraint::Length(_) => LightRed,
-            Constraint::Percentage(_) => Blue,
-            Constraint::Ratio(_, _) => LightBlue,
-            Constraint::Proportional(_) => Cyan,
-            Constraint::Max(_) => Green,
-            Constraint::Min(_) => LightGreen,
+            Constraint::Fixed(_) => material::RED.c400,
+            Constraint::Length(_) => material::RED.c300,
+            Constraint::Percentage(_) => material::BLUE.c300,
+            Constraint::Ratio(_, _) => material::BLUE.c200,
+            Constraint::Proportional(_) => material::BLUE.c400,
+            Constraint::Max(_) => material::GREEN.c400,
+            Constraint::Min(_) => material::GREEN.c300,
         };
         let text = format!("{} px\n{:?}", width, constraint);
         let block = Block::bordered()
