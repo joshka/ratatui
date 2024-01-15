@@ -19,14 +19,14 @@ const EXAMPLE_HEIGHT: u16 = ILLUSTRATION_HEIGHT + SPACER_HEIGHT;
 // priority 1
 const FIXED_COLOR: Color = tailwind::RED.c900;
 // priority 2
-const MIN_COLOR: Color = tailwind::BLUE.c900;
-const MAX_COLOR: Color = tailwind::BLUE.c700;
+const MIN_COLOR: Color = tailwind::YELLOW.c800;
+const MAX_COLOR: Color = tailwind::YELLOW.c700;
 // priority 3
 const LENGTH_COLOR: Color = tailwind::TEAL.c950;
 const PERCENTAGE_COLOR: Color = tailwind::TEAL.c900;
 const RATIO_COLOR: Color = tailwind::TEAL.c700;
 // priority 4
-const PROPORTIONAL_COLOR: Color = tailwind::AMBER.c700;
+const PROPORTIONAL_COLOR: Color = tailwind::BLUE.c700;
 
 fn main() -> Result<(), Box<dyn Error>> {
     // setup terminal
@@ -145,11 +145,11 @@ impl App {
         Tabs::new(
             [
                 ExampleSelection::Fixed,
+                ExampleSelection::Min,
+                ExampleSelection::Max,
                 ExampleSelection::Length,
                 ExampleSelection::Percentage,
                 ExampleSelection::Ratio,
-                ExampleSelection::Min,
-                ExampleSelection::Max,
                 ExampleSelection::Proportional,
             ]
             .iter()
@@ -288,12 +288,12 @@ impl Widget for ExampleSelection {
     fn render(self, area: Rect, buf: &mut Buffer) {
         match self {
             ExampleSelection::Fixed => self.render_fixed_example(area, buf),
+            ExampleSelection::Min => self.render_min_example(area, buf),
+            ExampleSelection::Max => self.render_max_example(area, buf),
             ExampleSelection::Length => self.render_length_example(area, buf),
             ExampleSelection::Percentage => self.render_percentage_example(area, buf),
             ExampleSelection::Ratio => self.render_ratio_example(area, buf),
             ExampleSelection::Proportional => self.render_proportional_example(area, buf),
-            ExampleSelection::Min => self.render_min_example(area, buf),
-            ExampleSelection::Max => self.render_max_example(area, buf),
         }
     }
 }
@@ -303,8 +303,9 @@ impl ExampleSelection {
         let [example1, example2, example3, example4, _] =
             area.split(&Layout::vertical([Fixed(EXAMPLE_HEIGHT); 5]));
         // these two examples are just for testing all the colors
-        Example::new([Fixed(20), Length(20), Percentage(20), Ratio(1, 5)]).render(example1, buf);
-        Example::new([Min(20), Max(20), Proportional(1)]).render(example2, buf);
+        Example::new([Fixed(20), Min(20), Max(20)]).render(example1, buf);
+        Example::new([Length(20), Percentage(20), Ratio(1, 5), Proportional(1)])
+            .render(example2, buf);
         Example::new([Fixed(40), Proportional(0)]).render(example3, buf);
 
         Example::new([Fixed(20), Fixed(20), Proportional(0)]).render(example4, buf);
