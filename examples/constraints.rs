@@ -412,7 +412,7 @@ impl Example {
         };
         let text = format!("{} px\n{:?}", width, constraint);
         let block = Block::bordered()
-            .border_style(Style::new().fg(bg).bg(bg).bold())
+            .border_style(Style::reset().fg(bg).reversed())
             .style(Style::default().fg(fg).bg(bg));
         Paragraph::new(text)
             .alignment(Alignment::Center)
