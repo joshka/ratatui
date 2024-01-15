@@ -7,7 +7,7 @@ use crossterm::{
 };
 use ratatui::{layout::Constraint::*, prelude::*, style::Stylize, widgets::*};
 
-const SPACER_HEIGHT: u16 = 1;
+const SPACER_HEIGHT: u16 = 0;
 const ILLUSTRATION_HEIGHT: u16 = 4;
 const EXAMPLE_HEIGHT: u16 = ILLUSTRATION_HEIGHT + SPACER_HEIGHT;
 
@@ -401,19 +401,20 @@ impl Widget for Example {
 impl Example {
     fn illustration(&self, constraint: Constraint, width: u16) -> Paragraph {
         use Color::*;
-        let (bg, fg) = match constraint {
-            Constraint::Fixed(_) => (Red, White),
-            Constraint::Length(_) => (LightRed, White),
-            Constraint::Percentage(_) => (Blue, White),
-            Constraint::Ratio(_, _) => (LightBlue, Black),
-            Constraint::Proportional(_) => (Cyan, White),
-            Constraint::Max(_) => (Green, White),
-            Constraint::Min(_) => (LightGreen, Black),
+        let color = match constraint {
+            Constraint::Fixed(_) => Red,
+            Constraint::Length(_) => LightRed,
+            Constraint::Percentage(_) => Blue,
+            Constraint::Ratio(_, _) => LightBlue,
+            Constraint::Proportional(_) => Cyan,
+            Constraint::Max(_) => Green,
+            Constraint::Min(_) => LightGreen,
         };
         let text = format!("{} px\n{:?}", width, constraint);
         let block = Block::bordered()
-            .border_style(Style::reset().fg(bg).reversed())
-            .style(Style::default().fg(fg).bg(bg));
+            .border_set(symbols::border::QUADRANT_OUTSIDE)
+            .border_style(Style::reset().fg(color).reversed())
+            .style(Style::default().black().bg(color));
         Paragraph::new(text)
             .alignment(Alignment::Center)
             .block(block)
