@@ -8,7 +8,7 @@ use crossterm::{
 use ratatui::{
     layout::Constraint::*,
     prelude::*,
-    style::{palette::material, palette::tailwind, Stylize},
+    style::{palette::tailwind, Stylize},
     widgets::*,
 };
 
@@ -17,16 +17,16 @@ const ILLUSTRATION_HEIGHT: u16 = 4;
 const EXAMPLE_HEIGHT: u16 = ILLUSTRATION_HEIGHT + SPACER_HEIGHT;
 
 // priority 1
-const FIXED_COLOR: Color = tailwind::RED.c700;
+const FIXED_COLOR: Color = tailwind::RED.c900;
 // priority 2
-const MIN_COLOR: Color = tailwind::INDIGO.c700;
-const MAX_COLOR: Color = tailwind::INDIGO.c500;
+const MIN_COLOR: Color = tailwind::INDIGO.c900;
+const MAX_COLOR: Color = tailwind::INDIGO.c700;
 // priority 3
-const LENGTH_COLOR: Color = tailwind::TEAL.c700;
-const PERCENTAGE_COLOR: Color = tailwind::TEAL.c500;
-const RATIO_COLOR: Color = tailwind::TEAL.c300;
+const LENGTH_COLOR: Color = tailwind::TEAL.c950;
+const PERCENTAGE_COLOR: Color = tailwind::TEAL.c900;
+const RATIO_COLOR: Color = tailwind::TEAL.c700;
 // priority 4
-const PROPORTIONAL_COLOR: Color = tailwind::YELLOW.c700;
+const PROPORTIONAL_COLOR: Color = tailwind::YELLOW.c950;
 
 fn main() -> Result<(), Box<dyn Error>> {
     // setup terminal
@@ -148,9 +148,9 @@ impl App {
                 ExampleSelection::Length,
                 ExampleSelection::Percentage,
                 ExampleSelection::Ratio,
-                ExampleSelection::Proportional,
                 ExampleSelection::Min,
                 ExampleSelection::Max,
+                ExampleSelection::Proportional,
             ]
             .iter()
             .map(|example| Line::from(*example)),
@@ -160,7 +160,7 @@ impl App {
                 .title("Constraints ".bold())
                 .title(" Use h l or ◄ ► to change tab and j k or ▲ ▼  to scroll"),
         )
-        .highlight_style(Style::default().bold().underlined().on_black())
+        .highlight_style(Style::default().bold())
         .select(self.selected_example.selected())
         .padding("", "")
         .divider(" ")
@@ -273,13 +273,13 @@ impl From<ExampleSelection> for Line<'static> {
         use ExampleSelection::*;
 
         match example {
-            Fixed => "  Fixed  ".black().bg(FIXED_COLOR).into(),
-            Length => "  Length  ".black().bg(LENGTH_COLOR).into(),
-            Percentage => "  Percentage  ".black().bg(PERCENTAGE_COLOR).into(),
-            Ratio => "  Ratio  ".black().bg(RATIO_COLOR).into(),
-            Proportional => "  Proportional  ".black().bg(PROPORTIONAL_COLOR).into(),
-            Min => "  Min  ".black().bg(MIN_COLOR).into(),
-            Max => "  Max  ".black().bg(MAX_COLOR).into(),
+            Fixed => "  Fixed  ".white().bg(FIXED_COLOR).into(),
+            Length => "  Length  ".white().bg(LENGTH_COLOR).into(),
+            Percentage => "  Percentage  ".white().bg(PERCENTAGE_COLOR).into(),
+            Ratio => "  Ratio  ".white().bg(RATIO_COLOR).into(),
+            Proportional => "  Proportional  ".white().bg(PROPORTIONAL_COLOR).into(),
+            Min => "  Min  ".white().bg(MIN_COLOR).into(),
+            Max => "  Max  ".white().bg(MAX_COLOR).into(),
         }
     }
 }
@@ -300,22 +300,14 @@ impl Widget for ExampleSelection {
 
 impl ExampleSelection {
     fn render_fixed_example(&self, area: Rect, buf: &mut Buffer) {
-        let [example1, example2, example3, _] =
-            area.split(&Layout::vertical([Fixed(EXAMPLE_HEIGHT); 4]));
+        let [example1, example2, example3, example4, _] =
+            area.split(&Layout::vertical([Fixed(EXAMPLE_HEIGHT); 5]));
+        // these two examples are just for testing all the colors
+        Example::new([Fixed(20), Length(20), Percentage(20), Ratio(1, 5)]).render(example1, buf);
+        Example::new([Min(20), Max(20), Proportional(1)]).render(example2, buf);
+        Example::new([Fixed(40), Proportional(0)]).render(example3, buf);
 
-        Example::new([
-            Fixed(20),
-            Length(20),
-            Percentage(20),
-            Ratio(1, 5),
-            Proportional(1),
-            Min(20),
-            Max(20),
-        ])
-        .render(example1, buf);
-        Example::new([Fixed(40), Proportional(0)]).render(example2, buf);
-
-        Example::new([Fixed(20), Fixed(20), Proportional(0)]).render(example3, buf);
+        Example::new([Fixed(20), Fixed(20), Proportional(0)]).render(example4, buf);
     }
 
     fn render_length_example(&self, area: Rect, buf: &mut Buffer) {
