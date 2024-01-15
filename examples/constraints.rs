@@ -7,7 +7,7 @@ use crossterm::{
 };
 use ratatui::{layout::Constraint::*, prelude::*, style::Stylize, widgets::*};
 
-const SPACER_HEIGHT: u16 = 0;
+const SPACER_HEIGHT: u16 = 1;
 const ILLUSTRATION_HEIGHT: u16 = 4;
 const EXAMPLE_HEIGHT: u16 = ILLUSTRATION_HEIGHT + SPACER_HEIGHT;
 
@@ -412,7 +412,7 @@ impl Example {
         };
         let text = format!("{} px\n{:?}", width, constraint);
         let block = Block::bordered()
-            .border_style(Style::reset().fg(bg))
+            .border_style(Style::new().fg(bg).bg(bg).bold())
             .style(Style::default().fg(fg).bg(bg));
         Paragraph::new(text)
             .alignment(Alignment::Center)
