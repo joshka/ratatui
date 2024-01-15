@@ -16,6 +16,18 @@ const SPACER_HEIGHT: u16 = 0;
 const ILLUSTRATION_HEIGHT: u16 = 4;
 const EXAMPLE_HEIGHT: u16 = ILLUSTRATION_HEIGHT + SPACER_HEIGHT;
 
+// priority 1
+const FIXED_COLOR: Color = material::RED.c900;
+// priority 2
+const MIN_COLOR: Color = material::INDIGO.c700;
+const MAX_COLOR: Color = material::INDIGO.c500;
+// priority 3
+const LENGTH_COLOR: Color = material::TEAL.c700;
+const PERCENTAGE_COLOR: Color = material::TEAL.c500;
+const RATIO_COLOR: Color = material::TEAL.c300;
+// priority 4
+const PROPORTIONAL_COLOR: Color = material::BROWN.c700;
+
 fn main() -> Result<(), Box<dyn Error>> {
     // setup terminal
     enable_raw_mode()?;
@@ -259,14 +271,15 @@ impl ExampleSelection {
 impl From<ExampleSelection> for Line<'static> {
     fn from(example: ExampleSelection) -> Self {
         use ExampleSelection::*;
+
         match example {
-            Fixed => "  Fixed  ".black().bg(material::RED.c400).into(),
-            Length => "  Length  ".black().bg(material::RED.c300).into(),
-            Percentage => "  Percentage  ".black().bg(material::BLUE.c300).into(),
-            Ratio => "  Ratio  ".black().bg(material::BLUE.c200).into(),
-            Proportional => "  Proportional  ".black().bg(material::BLUE.c400).into(),
-            Min => "  Min  ".white().bg(material::GREEN.c300).into(),
-            Max => "  Max  ".black().bg(material::GREEN.c400).into(),
+            Fixed => "  Fixed  ".black().bg(FIXED_COLOR).into(),
+            Length => "  Length  ".black().bg(LENGTH_COLOR).into(),
+            Percentage => "  Percentage  ".black().bg(PERCENTAGE_COLOR).into(),
+            Ratio => "  Ratio  ".black().bg(RATIO_COLOR).into(),
+            Proportional => "  Proportional  ".black().bg(PROPORTIONAL_COLOR).into(),
+            Min => "  Min  ".black().bg(MIN_COLOR).into(),
+            Max => "  Max  ".black().bg(MAX_COLOR).into(),
         }
     }
 }
@@ -287,11 +300,22 @@ impl Widget for ExampleSelection {
 
 impl ExampleSelection {
     fn render_fixed_example(&self, area: Rect, buf: &mut Buffer) {
-        let [example1, example2, _] = area.split(&Layout::vertical([Fixed(EXAMPLE_HEIGHT); 3]));
+        let [example1, example2, example3, _] =
+            area.split(&Layout::vertical([Fixed(EXAMPLE_HEIGHT); 4]));
 
-        Example::new([Fixed(40), Proportional(0)]).render(example1, buf);
+        Example::new([
+            Fixed(20),
+            Length(20),
+            Percentage(20),
+            Ratio(1, 5),
+            Proportional(1),
+            Min(20),
+            Max(20),
+        ])
+        .render(example1, buf);
+        Example::new([Fixed(40), Proportional(0)]).render(example2, buf);
 
-        Example::new([Fixed(20), Fixed(20), Proportional(0)]).render(example2, buf);
+        Example::new([Fixed(20), Fixed(20), Proportional(0)]).render(example3, buf);
     }
 
     fn render_length_example(&self, area: Rect, buf: &mut Buffer) {
@@ -405,21 +429,20 @@ impl Widget for Example {
 
 impl Example {
     fn illustration(&self, constraint: Constraint, width: u16) -> Paragraph {
-        use style::palette::material;
         let color = match constraint {
-            Constraint::Fixed(_) => material::RED.c400,
-            Constraint::Length(_) => material::RED.c300,
-            Constraint::Percentage(_) => material::BLUE.c300,
-            Constraint::Ratio(_, _) => material::BLUE.c200,
-            Constraint::Proportional(_) => material::BLUE.c400,
-            Constraint::Max(_) => material::GREEN.c400,
-            Constraint::Min(_) => material::GREEN.c300,
+            Constraint::Fixed(_) => FIXED_COLOR,
+            Constraint::Length(_) => LENGTH_COLOR,
+            Constraint::Percentage(_) => PERCENTAGE_COLOR,
+            Constraint::Ratio(_, _) => RATIO_COLOR,
+            Constraint::Proportional(_) => PROPORTIONAL_COLOR,
+            Constraint::Min(_) => MIN_COLOR,
+            Constraint::Max(_) => MAX_COLOR,
         };
         let text = format!("{} px\n{:?}", width, constraint);
         let block = Block::bordered()
             .border_set(symbols::border::QUADRANT_OUTSIDE)
             .border_style(Style::reset().fg(color).reversed())
-            .style(Style::default().black().bg(color));
+            .style(Style::default().white().bg(color));
         Paragraph::new(text)
             .alignment(Alignment::Center)
             .block(block)
