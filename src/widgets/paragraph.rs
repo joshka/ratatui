@@ -1,5 +1,6 @@
 use unicode_width::UnicodeWidthStr;
 
+use super::{block::BlockExt, RefWidget};
 use crate::{
     prelude::*,
     text::StyledGrapheme,
@@ -8,8 +9,6 @@ use crate::{
         Block, Widget,
     },
 };
-
-use super::{block::BlockExt, RefWidget};
 
 fn get_line_offset(line_width: u16, text_area_width: u16, alignment: Alignment) -> u16 {
     match alignment {

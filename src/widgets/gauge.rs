@@ -1,4 +1,5 @@
 #![deny(missing_docs)]
+use super::block::BlockExt;
 use crate::{
     buffer::Buffer,
     layout::Rect,
@@ -7,8 +8,6 @@ use crate::{
     text::{Line, Span},
     widgets::{Block, RefWidget, Widget},
 };
-
-use super::block::BlockExt;
 
 /// A widget to display a progress bar.
 ///
@@ -223,7 +222,7 @@ impl Gauge<'_> {
             }
         }
         // render the label
-        buf.set_span(label_col, label_row, &label, clamped_label_width);
+        buf.set_span(label_col, label_row, label, clamped_label_width);
     }
 }
 

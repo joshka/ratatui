@@ -66,9 +66,9 @@ use crate::{buffer::Buffer, layout::Rect};
 /// # let backend = TestBackend::new(5, 5);
 /// # let mut terminal = Terminal::new(backend).unwrap();
 ///
-/// terminal.draw(|f| {
+/// terminal.draw(|frame| {
 ///     // A widget can be rendered by simply calling its `render` method.
-///     Block::default().render(f, f.size());
+///     frame.render_widget(Clear, frame.size());
 /// });
 /// ```
 pub trait Widget {
