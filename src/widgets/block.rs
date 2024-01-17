@@ -807,6 +807,25 @@ impl Block<'_> {
     }
 }
 
+/// An extension trait for [`Block`] that provides some convenience methods.
+pub trait BlockExt {
+    /// Render the block if it is `Some` and update the area to the inner area of the block.
+    /// Otherwise, do nothing.
+    ///
+    /// This is useful for widgets that have a block as a field and want to render it if it is
+    /// `Some` and update the area to the inner area of the block.
+    fn render(&self, area: &mut Rect, buf: &mut Buffer);
+}
+
+impl BlockExt for Option<Block<'_>> {
+    fn render(&self, area: &mut Rect, buf: &mut Buffer) {
+        if let Some(block) = self {
+            block.render_ref(*area, buf);
+            *area = block.inner(*area);
+        }
+    }
+}
+
 impl<'a> Styled for Block<'a> {
     type Item = Block<'a>;
 
