@@ -78,6 +78,23 @@ pub trait Widget {
 }
 
 /// A `RefWidget` is a widget that can be drawn on a [`Buffer`] in a given [`Rect`].
+///
+/// This trait is used to implement [`Widget`] for references to widgets, which is useful for
+/// widgets that don't consume self.
+///
+/// `Widget is implemented for `&T` where `T` implements `RefWidget`. This allows to use `&T` as
+/// argument to [`Frame::render`].
+///
+/// # Example
+///
+/// ```rust
+/// # use ratatui::{prelude::*,widgets::*};
+/// # fn render_ui(frame: &mut Frame) {
+/// // The `Clear` widget is a good example of a widget that doesn't consume self.
+/// frame.render_ref_widget(&Clear, frame.size());
+/// // it can also be rendered directly as `&Clear` implements Widget.
+/// frame.render_widget(&Clear, frame.size());
+/// # }
 pub trait RefWidget {
     fn render_ref(&self, area: Rect, buf: &mut Buffer);
 }
