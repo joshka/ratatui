@@ -12,6 +12,7 @@ pub mod title;
 use strum::{Display, EnumString};
 
 pub use self::title::{Position, Title};
+use super::RefWidget;
 use crate::{
     prelude::*,
     symbols::border,
@@ -605,7 +606,25 @@ impl<'a> Block<'a> {
         self.padding = padding;
         self
     }
+}
 
+impl Widget for Block<'_> {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        self.render_ref(area, buf);
+    }
+}
+
+impl RefWidget for Block<'_> {
+    fn render_ref(&self, area: Rect, buf: &mut Buffer) {
+        if area.is_empty() {
+            return;
+        }
+        self.render_borders(area, buf);
+        self.render_titles(area, buf);
+    }
+}
+
+impl Block<'_> {
     fn render_borders(&self, area: Rect, buf: &mut Buffer) {
         buf.set_style(area, self.style);
         let symbols = self.border_set;
@@ -785,16 +804,6 @@ impl<'a> Block<'a> {
     fn render_titles(&self, area: Rect, buf: &mut Buffer) {
         self.render_title_position(Position::Top, area, buf);
         self.render_title_position(Position::Bottom, area, buf);
-    }
-}
-
-impl<'a> Widget for Block<'a> {
-    fn render(self, area: Rect, buf: &mut Buffer) {
-        if area.area() == 0 {
-            return;
-        }
-        self.render_borders(area, buf);
-        self.render_titles(area, buf);
     }
 }
 
