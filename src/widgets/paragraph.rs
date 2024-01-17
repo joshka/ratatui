@@ -9,6 +9,8 @@ use crate::{
     },
 };
 
+use super::{block::BlockExt, RefWidget};
+
 fn get_line_offset(line_width: u16, text_area_width: u16, alignment: Alignment) -> u16 {
     match alignment {
         Alignment::Center => (text_area_width / 2).saturating_sub(line_width / 2),
@@ -280,19 +282,23 @@ impl<'a> Paragraph<'a> {
     }
 }
 
-impl<'a> Widget for Paragraph<'a> {
-    fn render(mut self, area: Rect, buf: &mut Buffer) {
-        buf.set_style(area, self.style);
-        let text_area = match self.block.take() {
-            Some(b) => {
-                let inner_area = b.inner(area);
-                b.render(area, buf);
-                inner_area
-            }
-            None => area,
-        };
+impl Widget for Paragraph<'_> {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        self.render_ref(area, buf);
+    }
+}
 
-        if text_area.height < 1 {
+impl RefWidget for Paragraph<'_> {
+    fn render_ref(&self, mut area: Rect, buf: &mut Buffer) {
+        buf.set_style(area, self.style);
+        self.block.render(&mut area, buf);
+        self.render_paragraph(area, buf);
+    }
+}
+
+impl Paragraph<'_> {
+    fn render_paragraph(&self, text_area: Rect, buf: &mut Buffer) {
+        if text_area.is_empty() {
             return;
         }
 
