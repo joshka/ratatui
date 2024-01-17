@@ -53,11 +53,49 @@ pub use self::{
 };
 use crate::{buffer::Buffer, layout::Rect};
 
-/// Base requirements for a Widget
+/// A `Widget` is a type that can be drawn on a [`Buffer`] in a given [`Rect`].
+///
+/// Widgets are created for each frame as they are consumed after rendered. They are not meant to be
+/// stored but used as *commands* to draw common figures in the UI.
+///
+/// ## Examples
+///
+/// ```rust,no_run
+/// use ratatui::{backend::TestBackend, prelude::*, widgets::*};
+///
+/// # let backend = TestBackend::new(5, 5);
+/// # let mut terminal = Terminal::new(backend).unwrap();
+///
+/// terminal.draw(|f| {
+///     // A widget can be rendered by simply calling its `render` method.
+///     Block::default().render(f, f.size());
+/// });
+/// ```
 pub trait Widget {
     /// Draws the current state of the widget in the given buffer. That is the only method required
     /// to implement a custom widget.
     fn render(self, area: Rect, buf: &mut Buffer);
+}
+
+/// A `RefWidget` is a widget that can be drawn on a [`Buffer`] in a given [`Rect`].
+pub trait RefWidget {
+    fn render_ref(&self, area: Rect, buf: &mut Buffer);
+}
+
+impl<T: RefWidget> Widget for &T {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        self.render_ref(area, buf);
+    }
+}
+
+pub trait MutWidget {
+    fn render_mut(&mut self, area: Rect, buf: &mut Buffer);
+}
+
+impl<T: MutWidget> Widget for &mut T {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        self.render_mut(area, buf);
+    }
 }
 
 /// A `StatefulWidget` is a widget that can take advantage of some local state to remember things

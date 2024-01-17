@@ -1,6 +1,6 @@
 use crate::{
     prelude::*,
-    widgets::{StatefulWidget, Widget},
+    widgets::{MutWidget, RefWidget, StatefulWidget, Widget},
 };
 
 /// A consistent view into the terminal state for rendering a single frame.
@@ -74,11 +74,18 @@ impl Frame<'_> {
     /// ```
     ///
     /// [`Layout`]: crate::layout::Layout
-    pub fn render_widget<W>(&mut self, widget: W, area: Rect)
-    where
-        W: Widget,
-    {
+    pub fn render_widget<W: Widget>(&mut self, widget: W, area: Rect) {
         widget.render(area, self.buffer);
+    }
+
+    /// Render a [`RefWidget`] to the current buffer using [`RefWidget::render_ref`].
+    pub fn render_ref_widget<W: RefWidget>(&mut self, widget: &W, area: Rect) {
+        widget.render_ref(area, self.buffer);
+    }
+
+    /// Render a [`MutWidget`] to the current buffer using [`MutWidget::render_mut`].
+    pub fn render_mut_widget<W: MutWidget>(&mut self, widget: &mut W, area: Rect) {
+        widget.render_mut(area, self.buffer);
     }
 
     /// Render a [`StatefulWidget`] to the current buffer using [`StatefulWidget::render`].
