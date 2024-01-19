@@ -336,6 +336,7 @@ impl<'a> StatefulWidget for Scrollbar<'a> {
 }
 
 impl Scrollbar<'_> {
+    /// Returns that the scrollbar should be rendered in the given area
     fn scollbar_area(&self, area: Rect) -> Rect {
         match self.orientation {
             ScrollbarOrientation::VerticalLeft => Rect { width: 1, ..area },
@@ -353,6 +354,7 @@ impl Scrollbar<'_> {
         }
     }
 
+    /// Returns an iterator over the symbols and styles of the parts of a scrollbar
     fn bars(&self, area: Rect, state: &mut ScrollbarState) -> impl Iterator<Item = (&str, Style)> {
         let (track_start_len, thumb_len, track_end_len) = self.part_lengths(area, state);
 
@@ -371,29 +373,13 @@ impl Scrollbar<'_> {
 
     /// Returns the lengths of the parts of a scrollbar
     ///
-    /// The scrollbar has 3 parts of note:
-    /// - the beginning track part
-    /// - the thumb part
-    /// - the end track part
-    ///
     /// ```plain
-    ///       ┌──────────── thumb_len
-    ///     vvvvv
-    /// <═══█████═══════>
-    ///  ^^^     ^^^^^^^
-    ///   │         └────── track_end_len
-    ///   │
-    ///   └──────────────── track_start_len
+    /// <---------▮▮▮▮▮▮▮------->
+    ///    start   thumb   end
     /// ```
-    ///
-    /// This method returns the length of each part together as a tuple.
-    ///
-    /// # Returns
-    ///
-    /// `(track_start_len, thumb_len, track_end_len)`
     fn part_lengths(&self, area: Rect, state: &mut ScrollbarState) -> (usize, usize, usize) {
-        let track_len = self.track_length(area) as f64;
-        let viewport_len = self.viewport_len(area) as f64;
+        let track_len = self.track_length_excluding_arrow_heads(area) as f64;
+        let viewport_len = self.viewport_length(area) as f64;
 
         let content_length = state.content_length as f64;
         // if user passes in position > content_length, we shouldn't panic
@@ -420,17 +406,7 @@ impl Scrollbar<'_> {
         (track_start_len, thumb_len, track_end_len)
     }
 
-    /// Calculates length of the track excluding the arrow heads
-    /// ```plain
-    ///        ┌────────── track_length
-    ///  vvvvvvvvvvvvvvv
-    /// <═══█████═══════>
-    /// ```
-    ///
-    /// # Returns
-    ///
-    /// `(track_length)`
-    fn track_length(&self, area: Rect) -> u16 {
+    fn track_length_excluding_arrow_heads(&self, area: Rect) -> u16 {
         let start_len = self.begin_symbol.map(|s| s.width() as u16).unwrap_or(0);
         let end_len = self.end_symbol.map(|s| s.width() as u16).unwrap_or(0);
         let arrows_len = start_len + end_len;
@@ -441,7 +417,7 @@ impl Scrollbar<'_> {
         }
     }
 
-    fn viewport_len(&self, area: Rect) -> u16 {
+    fn viewport_length(&self, area: Rect) -> u16 {
         if self.orientation.is_vertical() {
             area.height
         } else {
