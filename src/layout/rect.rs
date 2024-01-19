@@ -298,9 +298,9 @@ impl Rect {
     ///     println!("Row: {:?}", row);
     /// }
     /// ```
-    pub fn rows(&self) -> Rows {
+    pub fn rows(self) -> Rows {
         Rows {
-            rect: *self,
+            rect: self,
             current_row: self.y,
         }
     }
@@ -320,9 +320,9 @@ impl Rect {
     ///     println!("Column: {:?}", column);
     /// }
     /// ```
-    pub fn columns(&self) -> Columns {
+    pub fn columns(self) -> Columns {
         Columns {
-            rect: *self,
+            rect: self,
             current_column: self.x,
         }
     }

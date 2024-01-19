@@ -25,7 +25,7 @@ where
             f.render_widget(chart, f.size());
         })
         .unwrap();
-    let lines = lines.into_iter().map(|l| l.into()).collect();
+    let lines = lines.into_iter().map(|l| l.into());
     let expected = Buffer::with_lines(lines);
     terminal.backend().assert_buffer(&expected);
 }
