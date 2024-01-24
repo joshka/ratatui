@@ -15,15 +15,16 @@
 
 use std::{error::Error, io};
 
-/// A simple example demonstrating how to handle user input. This is a bit out of the scope of the
-/// library as it does not provide any input handling out of the box. However, it may helps some to
-/// get started.
+/// A simple example demonstrating how to handle user input. This is a bit out of the scope of
+/// the library as it does not provide any input handling out of the box. However, it may helps
+/// some to get started.
 ///
 /// This is a very simple example:
 ///   * An input box always focused. Every character you type is registered here.
 ///   * An entered character is inserted at the cursor position.
 ///   * Pressing Backspace erases the left character before the cursor position
-///   * Pressing Enter pushes the current input in the history of previous messages. **Note: ** as
+///   * Pressing Enter pushes the current input in the history of previous messages. **Note: **
+///     as
 ///   this is a relatively simple example unicode characters are unsupported and their use will
 /// result in undefined behaviour.
 ///
