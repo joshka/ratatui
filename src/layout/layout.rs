@@ -594,34 +594,31 @@ impl Layout {
         // ```
 
         let area = Element::new();
-        let variable_count = self.constraints.len().saturating_add(2);
+        let variable_count = self.constraints.len() * 2 + 2;
         let variables = iter::repeat_with(Variable::new)
             .take(variable_count)
             .collect_vec();
         let spacers = variables
             .iter()
-            .tuple_windows()
+            .tuples()
             .map(|(a, b)| Element::from((*a, *b)))
             .collect_vec();
         let segments = variables
             .iter()
             .skip(1)
-            .tuple_windows()
+            .tuples()
             .map(|(a, b)| Element::from((*a, *b)))
             .collect_vec();
 
+        let flex = self.flex;
+        let spacing = self.spacing;
+        let constraints = &self.constraints;
+
         configure_area(&mut solver, area, area_start, area_end)?;
-        configure_variable_constraints(&mut solver, variables, area)?;
-        configure_flex_constraints(
-            &mut solver,
-            area,
-            &spacers,
-            &segments,
-            self.flex,
-            self.spacing,
-        )?;
-        configure_constraints(&mut solver, area, &segments, &self.constraints)?;
-        configure_proportional_constraints(&mut solver, &segments, &self.constraints)?;
+        configure_variable_constraints(&mut solver, &variables, area)?;
+        configure_flex_constraints(&mut solver, area, &spacers, &segments, flex, spacing)?;
+        configure_constraints(&mut solver, area, &segments, constraints)?;
+        configure_proportional_constraints(&mut solver, &segments, constraints)?;
 
         // `solver.fetch_changes()` can only be called once per solve
         let changes: HashMap<Variable, f64> = solver.fetch_changes().iter().copied().collect();
@@ -647,24 +644,24 @@ fn configure_area(
 
 fn configure_variable_constraints(
     solver: &mut Solver,
-    variables: Vec<Variable>,
+    variables: &[Variable],
     area: Element,
 ) -> Result<(), AddConstraintError> {
     // all variables are in the range [area.start, area.end]
-    for variable in variables.iter() {
-        solver.add_constraint(*variable | GE(REQUIRED) | area.start)?;
-        solver.add_constraint(*variable | LE(REQUIRED) | area.end)?;
+    for &variable in variables.iter() {
+        solver.add_constraint(variable | GE(REQUIRED) | area.start)?;
+        solver.add_constraint(variable | LE(REQUIRED) | area.end)?;
     }
 
     // all variables are in ascending order
-    for (left, right) in variables.iter().tuple_windows() {
-        solver.add_constraint(*left | LE(REQUIRED) | *right)?;
+    for (&left, &right) in variables.iter().tuple_windows() {
+        solver.add_constraint(left | LE(REQUIRED) | right)?;
     }
 
     // the first and last variables are at the start and end of the area
-    if let (Some(first), Some(last)) = (variables.first(), variables.last()) {
-        solver.add_constraint(*first | EQ(REQUIRED) | area.start)?;
-        solver.add_constraint(*last | EQ(REQUIRED) | area.end)?;
+    if let (Some(&first), Some(&last)) = (variables.first(), variables.last()) {
+        solver.add_constraint(first | EQ(REQUIRED) | area.start)?;
+        solver.add_constraint(last | EQ(REQUIRED) | area.end)?;
     }
     Ok(())
 }
@@ -672,8 +669,8 @@ fn configure_variable_constraints(
 fn configure_constraints(
     solver: &mut Solver,
     area: Element,
-    segments: &Vec<Element>,
-    constraints: &Vec<Constraint>,
+    segments: &[Element],
+    constraints: &[Constraint],
 ) -> Result<(), AddConstraintError> {
     for (&constraint, &element) in constraints.iter().zip(segments.iter()) {
         match constraint {
@@ -712,18 +709,18 @@ fn configure_constraints(
 fn configure_flex_constraints(
     solver: &mut Solver,
     area: Element,
-    spacers: &Vec<Element>,
-    segments: &Vec<Element>,
+    spacers: &[Element],
+    segments: &[Element],
     flex: Flex,
     spacing: u16,
 ) -> Result<(), AddConstraintError> {
     let spacers_except_first_and_last = spacers.get(1..spacers.len() - 1).unwrap_or(&[]);
     let spacing = f64::from(spacing);
-    Ok(match flex {
+    match flex {
         // all spacers are the same size and will grow to fill any remaining space after the
         // constraints are satisfied
         Flex::SpaceAround => {
-            for (left, right) in spacers.iter().tuple_windows() {
+            for (left, right) in spacers.iter().tuple_combinations() {
                 solver.add_constraint(left.has_size(right, SPACER_SIZE_EQ))?
             }
             for spacer in spacers.iter() {
@@ -734,15 +731,15 @@ fn configure_flex_constraints(
         // all spacers are the same size and will grow to fill any remaining space after the
         // constraints are satisfied, but the first and last spacers are zero size
         Flex::SpaceBetween => {
-            for (left, right) in spacers_except_first_and_last.iter().tuple_windows() {
+            for (left, right) in spacers_except_first_and_last.iter().tuple_combinations() {
                 solver.add_constraint(left.has_size(right.size(), SPACER_SIZE_EQ))?
             }
             for spacer in spacers.iter() {
                 solver.add_constraint(spacer.has_size(area, SPACE_GROWER))?;
             }
             if let (Some(first), Some(last)) = (spacers.first(), spacers.last()) {
-                solver.add_constraint(first.is_empty(REQUIRED))?;
-                solver.add_constraint(last.is_empty(REQUIRED))?;
+                solver.add_constraint(first.is_empty(REQUIRED - 1.0))?;
+                solver.add_constraint(last.is_empty(REQUIRED - 1.0))?;
             }
         }
         Flex::StretchLast => {
@@ -750,20 +747,20 @@ fn configure_flex_constraints(
                 solver.add_constraint(spacer.has_size(spacing, SPACER_SIZE_EQ))?;
             }
             if let (Some(first), Some(last)) = (spacers.first(), spacers.last()) {
-                solver.add_constraint(first.is_empty(REQUIRED))?;
-                solver.add_constraint(last.is_empty(REQUIRED))?;
+                solver.add_constraint(first.is_empty(REQUIRED - 1.0))?;
+                solver.add_constraint(last.is_empty(REQUIRED - 1.0))?;
             }
         }
         Flex::Stretch => {
             for spacer in spacers_except_first_and_last {
                 solver.add_constraint(spacer.has_size(spacing, SPACER_SIZE_EQ))?;
             }
-            for (left, right) in segments.iter().tuple_windows() {
+            for (left, right) in segments.iter().tuple_combinations() {
                 solver.add_constraint(left.has_size(right, GROWER))?;
             }
             if let (Some(first), Some(last)) = (spacers.first(), spacers.last()) {
-                solver.add_constraint(first.is_empty(REQUIRED))?;
-                solver.add_constraint(last.is_empty(REQUIRED))?;
+                solver.add_constraint(first.is_empty(REQUIRED - 1.0))?;
+                solver.add_constraint(last.is_empty(REQUIRED - 1.0))?;
             }
         }
         Flex::Start => {
@@ -771,7 +768,7 @@ fn configure_flex_constraints(
                 solver.add_constraint(spacer.has_size(spacing, SPACER_SIZE_EQ))?;
             }
             if let (Some(first), Some(last)) = (spacers.first(), spacers.last()) {
-                solver.add_constraint(first.is_empty(REQUIRED))?;
+                solver.add_constraint(first.is_empty(REQUIRED - 1.0))?;
                 solver.add_constraint(last.grows_to(area))?;
             }
         }
@@ -790,11 +787,12 @@ fn configure_flex_constraints(
                 solver.add_constraint(spacer.has_size(spacing, SPACER_SIZE_EQ))?;
             }
             if let (Some(first), Some(last)) = (spacers.first(), spacers.last()) {
-                solver.add_constraint(last.is_empty(REQUIRED))?;
+                solver.add_constraint(last.is_empty(REQUIRED - 1.0))?;
                 solver.add_constraint(first.grows_to(area))?;
             }
         }
-    })
+    }
+    Ok(())
 }
 
 /// Make every `Proportional` constraint proportionally equal to each other
@@ -813,8 +811,8 @@ fn configure_flex_constraints(
 /// size == base_element * scaling_factor
 fn configure_proportional_constraints(
     solver: &mut Solver,
-    segments: &Vec<Element>,
-    constraints: &Vec<Constraint>,
+    segments: &[Element],
+    constraints: &[Constraint],
 ) -> Result<(), AddConstraintError> {
     for ((&l_constraint, &l_element), (&r_constraint, &r_element)) in constraints
         .iter()
@@ -2350,5 +2348,17 @@ mod tests {
         let y = changes.get(&y).unwrap_or(&0.0).round() as u16;
         assert_eq!(x, 2);
         assert_eq!(y, 3);
+    }
+
+    #[test]
+    fn empty_table_edge_case() {
+        let rect = Rect::new(0, 0, 100, 1);
+        let r = Layout::default()
+            .spacing(1)
+            .flex(Flex::Start)
+            .try_split(rect)
+            .unwrap()
+            .0;
+        assert_eq!(r.len(), 0);
     }
 }
