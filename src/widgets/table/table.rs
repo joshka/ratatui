@@ -201,6 +201,9 @@ pub struct Table<'a> {
     /// Space between each column
     column_spacing: u16,
 
+    /// Space between each row
+    row_spacing: u16,
+
     /// A block to wrap the widget in
     block: Option<Block<'a>>,
 
@@ -218,6 +221,23 @@ pub struct Table<'a> {
 
     /// Controls how to distribute extra space among the columns
     flex: Flex,
+
+    /// Border style for the table
+    border_symbols: Option<BorderSymbols>,
+}
+
+/// PoC for table borders
+///
+/// It's likely that this will be changed to support combinations of border styles, perhaps to a
+/// struct instead of an enum (similar to the various symbol Sets in symbols::*)
+#[stability::unstable(
+    feature = "table_borders",
+    issue = "https://github.com/ratatui-org/ratatui/issues/604"
+)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+#[non_exhaustive]
+enum BorderSymbols {
+    Plain,
 }
 
 impl<'a> Default for Table<'a> {
@@ -228,12 +248,14 @@ impl<'a> Default for Table<'a> {
             footer: None,
             widths: Vec::new(),
             column_spacing: 1,
+            row_spacing: 0,
             block: None,
             style: Style::new(),
             highlight_style: Style::new(),
             highlight_symbol: Text::default(),
             highlight_spacing: HighlightSpacing::default(),
             flex: Flex::Start,
+            border_symbols: None,
         }
     }
 }
@@ -402,6 +424,36 @@ impl<'a> Table<'a> {
     #[must_use = "method moves the value of self and returns the modified value"]
     pub const fn column_spacing(mut self, spacing: u16) -> Self {
         self.column_spacing = spacing;
+        self
+    }
+
+    /// Set the spacing between rows
+    ///
+    /// This is a fluent setter method which must be chained or used as it consumes self
+    ///
+    /// PoC for table borders
+    #[stability::unstable(
+        feature = "table_borders",
+        issue = "https://github.com/ratatui-org/ratatui/issues/604"
+    )]
+    #[must_use = "method moves the value of self and returns the modified value"]
+    pub const fn row_spacing(mut self, spacing: u16) -> Self {
+        self.row_spacing = spacing;
+        self
+    }
+
+    /// Set the border_symbols for the table
+    ///
+    /// This is a fluent setter method which must be chained or used as it consumes self
+    ///
+    /// PoC for table borders
+    #[stability::unstable(
+        feature = "table_borders",
+        issue = "https://github.com/ratatui-org/ratatui/issues/604"
+    )]
+    #[must_use = "method moves the value of self and returns the modified value"]
+    pub const fn border_symbols(mut self, border_symbols: BorderSymbols) -> Self {
+        self.border_symbols = Some(border_symbols);
         self
     }
 
@@ -690,12 +742,28 @@ impl Table<'_> {
             .skip(state.offset)
             .take(end_index - start_index)
         {
+            // TODO extract this loop body out mostly to a Row::render method
+            // TODO extract the border rendering out to a separate method
+            if let Some(border_style) = self.border_symbols {
+                if self.row_spacing > 0 {
+                    match border_style {
+                        BorderSymbols::Plain => {
+                            let y = area.y + y_offset;
+                            for x in area.x..area.right() {
+                                buf.get_mut(x, y).set_symbol(symbols::line::HORIZONTAL);
+                            }
+                        }
+                    }
+                    y_offset = y_offset.saturating_add(self.row_spacing);
+                }
+            }
             let row_area = Rect::new(
                 area.x,
                 area.y + y_offset + row.top_margin,
                 area.width,
                 row.height_with_margin() - row.top_margin,
-            );
+            )
+            .clamp(area);
             buf.set_style(row_area, row.style);
 
             let is_selected = state.selected().is_some_and(|index| index == i);
@@ -708,15 +776,26 @@ impl Table<'_> {
                 highlight_symbol.clone().render(selection_area, buf);
             };
             for ((x, width), cell) in columns_widths.iter().zip(row.cells.iter()) {
-                cell.render(
-                    Rect::new(row_area.x + x, row_area.y, *width, row_area.height),
-                    buf,
-                );
+                let cell_area = Rect::new(row_area.x + x, row_area.y, *width, row_area.height);
+                cell.render(cell_area, buf);
+                // TODO make this actually work better (and extract to a method)
+                if let Some(border_symbols) = self.border_symbols {
+                    match border_symbols {
+                        BorderSymbols::Plain => {
+                            if cell_area.right() < row_area.right() && self.column_spacing > 0 {
+                                buf.get_mut(cell_area.right(), row_area.y)
+                                    .set_symbol(symbols::line::VERTICAL);
+                            }
+                        }
+                    }
+                }
             }
             if is_selected {
                 buf.set_style(row_area, self.highlight_style);
             }
-            y_offset += row.height_with_margin();
+
+            y_offset = y_offset.saturating_add(row.height_with_margin());
+            // .saturating_add(self.row_spacing);
         }
     }
 
@@ -764,25 +843,35 @@ impl Table<'_> {
             if height + item.height > max_height {
                 break;
             }
-            height += item.height_with_margin();
+            height = height
+                .saturating_add(item.height_with_margin())
+                .saturating_add(self.row_spacing);
             end += 1;
         }
 
         let selected = selected.unwrap_or(0).min(self.rows.len() - 1);
         while selected >= end {
-            height = height.saturating_add(self.rows[end].height_with_margin());
+            height = height
+                .saturating_add(self.rows[end].height_with_margin())
+                .saturating_add(self.row_spacing);
             end += 1;
             while height > max_height {
-                height = height.saturating_sub(self.rows[start].height_with_margin());
+                height = height
+                    .saturating_sub(self.rows[start].height_with_margin())
+                    .saturating_sub(self.row_spacing);
                 start += 1;
             }
         }
         while selected < start {
             start -= 1;
-            height = height.saturating_add(self.rows[start].height_with_margin());
+            height = height
+                .saturating_add(self.rows[start].height_with_margin())
+                .saturating_add(self.row_spacing);
             while height > max_height {
                 end -= 1;
-                height = height.saturating_sub(self.rows[end].height_with_margin());
+                height = height
+                    .saturating_sub(self.rows[end].height_with_margin())
+                    .saturating_sub(self.row_spacing);
             }
         }
         (start, end)
@@ -842,7 +931,9 @@ mod tests {
     use std::vec;
 
     use super::*;
-    use crate::{layout::Constraint::*, style::Style, text::Line, widgets::Borders};
+    use crate::{
+        assert_buffer_eq, layout::Constraint::*, style::Style, text::Line, widgets::Borders,
+    };
 
     #[test]
     fn new() {
@@ -1785,5 +1876,29 @@ mod tests {
                 .add_modifier(Modifier::BOLD)
                 .remove_modifier(Modifier::CROSSED_OUT)
         );
+    }
+
+    #[test]
+    fn border_symbols() {
+        let mut buf = Buffer::empty(Rect::new(0, 0, 15, 6));
+        let header = Row::new(vec!["Head1", "Head2"]);
+        let rows = vec![
+            Row::new(vec!["Cell1", "Cell2"]),
+            Row::new(vec!["Cell3", "Cell4"]),
+        ];
+        let table = Table::new(rows, [Constraint::Length(5); 2])
+            .header(header)
+            .row_spacing(1)
+            .border_symbols(BorderSymbols::Plain);
+        Widget::render(table, buf.area, &mut buf);
+        let expected = Buffer::with_lines(vec![
+            "Head1 Head2    ",
+            "───────────────",
+            "Cell1│Cell2│   ",
+            "───────────────",
+            "Cell3│Cell4│   ",
+            "               ",
+        ]);
+        assert_buffer_eq!(buf, expected);
     }
 }
