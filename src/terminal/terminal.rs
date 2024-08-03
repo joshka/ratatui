@@ -1,6 +1,47 @@
+#![deny(missing_docs)]
+//! Provides the [`Terminal`], [`Frame`] and related types.
+//!
+//! The [`Terminal`] is the main interface of this library. It is responsible for drawing and
+//! maintaining the state of the different widgets that compose your application.
+//!
+//! The [`Frame`] is a consistent view into the terminal state for rendering. It is obtained via
+//! the closure argument of [`Terminal::draw`]. It is used to render widgets to the terminal and
+//! control the cursor position.
+//!
+//! # Example
+//!
+//! ```rust,no_run
+//! use std::io::stdout;
+//!
+//! use ratatui::{prelude::*, widgets::Paragraph};
+//!
+//! let backend = CrosstermBackend::new(stdout());
+//! let mut terminal = Terminal::new(backend)?;
+//! terminal.draw(|frame| {
+//!     let area = frame.size();
+//!     frame.render_widget(Paragraph::new("Hello world!"), area);
+//! })?;
+//! # std::io::Result::Ok(())
+//! ```
+//!
+//! [Crossterm]: https://crates.io/crates/crossterm
+//! [Termion]: https://crates.io/crates/termion
+//! [Termwiz]: https://crates.io/crates/termwiz
+//! [`backend`]: crate::backend
+//! [`Backend`]: crate::backend::Backend
+//! [`Buffer`]: crate::buffer::Buffer
 use std::io;
 
-use crate::{backend::ClearType, prelude::*, CompletedFrame, TerminalOptions, Viewport};
+mod frame;
+mod viewport;
+
+pub use frame::{CompletedFrame, Frame};
+pub use viewport::Viewport;
+
+use crate::{
+    backend::ClearType,
+    prelude::{Backend, Buffer, Position, Rect},
+};
 
 /// An interface to interact and draw [`Frame`]s on the user's terminal.
 ///
@@ -114,7 +155,7 @@ where
     pub fn new(backend: B) -> io::Result<Self> {
         Self::with_options(
             backend,
-            TerminalOptions {
+            Options {
                 viewport: Viewport::Fullscreen,
             },
         )
@@ -132,7 +173,7 @@ where
     /// let terminal = Terminal::with_options(backend, TerminalOptions { viewport })?;
     /// # std::io::Result::Ok(())
     /// ```
-    pub fn with_options(mut backend: B, options: TerminalOptions) -> io::Result<Self> {
+    pub fn with_options(mut backend: B, options: Options) -> io::Result<Self> {
         let size = match options.viewport {
             Viewport::Fullscreen | Viewport::Inline(_) => backend.size()?,
             Viewport::Fixed(area) => area,

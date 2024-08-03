@@ -1,9 +1,16 @@
+#![warn(missing_docs)]
+//! A module for the [`Buffer`] and [`Cell`] types.
 use std::fmt;
 
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 
-use crate::{buffer::Cell, prelude::*};
+use crate::prelude::{Line, Rect, Span, Style};
+
+mod assert;
+mod cell;
+
+pub use cell::Cell;
 
 /// A buffer that maps to the desired content of the terminal after the draw call
 ///
@@ -451,6 +458,8 @@ mod tests {
 
     use itertools::Itertools;
     use rstest::{fixture, rstest};
+
+    use crate::style::{Color, Modifier, Stylize};
 
     use super::*;
 

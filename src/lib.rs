@@ -334,7 +334,7 @@
 #[cfg(feature = "crossterm")]
 pub use crossterm;
 #[doc(inline)]
-pub use terminal::{CompletedFrame, Frame, Terminal, TerminalOptions, Viewport};
+pub use terminal::{CompletedFrame, Frame, Options as TerminalOptions, Terminal, Viewport};
 /// re-export the `termion` crate so that users don't have to add it as a dependency
 #[cfg(feature = "termion")]
 pub use termion;
@@ -342,12 +342,20 @@ pub use termion;
 #[cfg(feature = "termwiz")]
 pub use termwiz;
 
+#[path = "backend/backend.rs"]
 pub mod backend;
+#[path = "buffer/buffer.rs"]
 pub mod buffer;
+#[path = "layout/layout.rs"]
 pub mod layout;
 pub mod prelude;
+#[path = "style/style.rs"]
 pub mod style;
+#[path = "symbols/symbols.rs"]
 pub mod symbols;
+#[path = "terminal/terminal.rs"]
 mod terminal;
+#[path = "text/text.rs"]
 pub mod text;
+#[path = "widgets/widgets.rs"]
 pub mod widgets;

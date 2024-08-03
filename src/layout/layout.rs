@@ -1,3 +1,23 @@
+#![warn(clippy::missing_const_for_fn)]
+
+mod alignment;
+mod constraint;
+mod direction;
+mod flex;
+mod margin;
+mod position;
+mod rect;
+mod size;
+
+pub use alignment::Alignment;
+pub use constraint::Constraint;
+pub use direction::Direction;
+pub use flex::Flex;
+pub use margin::Margin;
+pub use position::Position;
+pub use rect::Rect;
+pub use size::Size;
+
 use std::{cell::RefCell, collections::HashMap, iter, num::NonZeroUsize, rc::Rc};
 
 use cassowary::{
@@ -12,8 +32,6 @@ use self::strengths::{
     ALL_SEGMENT_GROW, FILL_GROW, GROW, LENGTH_SIZE_EQ, MAX_SIZE_EQ, MAX_SIZE_LE, MIN_SIZE_EQ,
     MIN_SIZE_GE, PERCENTAGE_SIZE_EQ, RATIO_SIZE_EQ, SPACER_SIZE_EQ, SPACE_GROW,
 };
-use super::Flex;
-use crate::prelude::*;
 
 type Rects = Rc<[Rect]>;
 type Segments = Rects;
