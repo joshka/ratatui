@@ -3760,6 +3760,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "tiling-panes"
+version = "0.0.0"
+dependencies = [
+ "color-eyre",
+ "crossterm 0.29.0",
+ "ratatui",
+]
+
+[[package]]
 name = "time"
 version = "0.3.55"
 source = "registry+https://github.com/rust-lang/crates.io-index"
