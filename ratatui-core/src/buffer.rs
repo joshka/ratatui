@@ -4,10 +4,12 @@
 mod assert;
 mod buffer;
 mod cell;
+mod cell_border;
 mod cell_width;
 mod diff;
 
 pub use buffer::Buffer;
 pub use cell::{Cell, CellDiffOption};
+pub use cell_border::{BorderJoints, BorderSegments, CellBorder, LineStyle};
 pub use cell_width::CellWidth;
 pub use diff::BufferDiff;

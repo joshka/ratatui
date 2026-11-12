@@ -3,6 +3,7 @@ use core::num::NonZeroU16;
 use compact_str::CompactString;
 use unicode_segmentation::UnicodeSegmentation;
 
+use crate::buffer::cell_border::CellBorder;
 use crate::buffer::cell_width::CellWidth;
 use crate::style::{Color, Modifier, Style};
 use crate::symbols::merge::MergeStrategy;
@@ -59,6 +60,9 @@ pub struct Cell {
     /// The modifier of the cell.
     pub modifier: Modifier,
 
+    /// The border drawn on the cell's edges by terminals that support the cell border protocol.
+    pub border: CellBorder,
+
     /// Special option applied when copying (diffing) the buffer to the screen (or another buffer).
     pub diff_option: CellDiffOption,
 
@@ -82,6 +86,7 @@ impl Cell {
         #[cfg(feature = "underline-color")]
         underline_color: Color::Reset,
         modifier: Modifier::empty(),
+        border: CellBorder::NONE,
         diff_option: CellDiffOption::None,
         skip: false,
     };
@@ -275,6 +280,7 @@ impl PartialEq for Cell {
             && self.fg == other.fg
             && self.bg == other.bg
             && self.modifier == other.modifier
+            && self.border == other.border
             && self.diff_option == other.diff_option
     }
 }
@@ -293,6 +299,7 @@ impl core::hash::Hash for Cell {
         #[cfg(feature = "underline-color")]
         self.underline_color.hash(state);
         self.modifier.hash(state);
+        self.border.hash(state);
         self.diff_option.hash(state);
         #[allow(deprecated)]
         self.skip.hash(state);
@@ -381,6 +388,7 @@ mod tests {
                 #[cfg(feature = "underline-color")]
                 underline_color: Color::Reset,
                 modifier: Modifier::empty(),
+                border: CellBorder::NONE,
                 diff_option: CellDiffOption::None,
                 skip: false,
             }
