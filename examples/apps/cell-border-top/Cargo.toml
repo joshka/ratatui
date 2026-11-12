@@ -1,0 +1,24 @@
+[package]
+name = "cell-border-top"
+publish = false
+license.workspace = true
+edition.workspace = true
+# sysinfo 0.39 needs a newer toolchain than the workspace minimum.
+rust-version = "1.95"
+
+[dependencies]
+color-eyre.workspace = true
+crossterm.workspace = true
+ratatui.workspace = true
+sysinfo = "0.39"
+
+[lints]
+workspace = true
+
+# GPU, power, temperature and frequency readings on Apple Silicon, which sysinfo doesn't have.
+[target.'cfg(all(target_os = "macos", target_arch = "aarch64"))'.dependencies]
+macmon = { version = "0.10", default-features = false }
+
+# Thread counts, which sysinfo doesn't report on macOS.
+[target.'cfg(target_os = "macos")'.dependencies]
+libproc = "0.14"
