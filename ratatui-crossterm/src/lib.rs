@@ -101,7 +101,7 @@ cfg_if::cfg_if! {
 #[cfg(all(feature = "crossterm_0_28", feature = "crossterm_0_29"))]
 use crossterm_0_28 as _;
 use ratatui_core::backend::{Backend, ClearType, WindowSize};
-use ratatui_core::buffer::{Cell, CellWidth};
+use ratatui_core::buffer::{BorderJoints, Cell, CellBorder, CellWidth, LineStyle};
 use ratatui_core::layout::{Position, Size};
 use ratatui_core::style::{Color, Modifier, Style};
 
@@ -227,6 +227,113 @@ where
     }
 }
 
+/// A command that sets the cell border protocol pen, which cells written afterwards receive.
+///
+/// An empty border clears the pen. Terminals that don't support the protocol ignore it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SetCellBorderPen(pub CellBorder);
+
+impl crossterm::Command for SetCellBorderPen {
+    fn write_ansi(&self, f: &mut impl core::fmt::Write) -> core::fmt::Result {
+        let border = self.0;
+        if border.is_empty() {
+            return f.write_str("\x1bP1+bcell-border;pen-clear;4095\x1b\\");
+        }
+        // The pen keeps segments that aren't in the mask, so clear the rest first.
+        let unset = !border.segments.bits() & 0x0fff;
+        if unset != 0 {
+            write!(f, "\x1bP1+bcell-border;pen-clear;{unset}\x1b\\")?;
+        }
+        write!(
+            f,
+            "\x1bP1+bcell-border;pen;{};{};{};{};1",
+            border.segments.bits(),
+            border.width.clamp(1, 64),
+            BorderColor(border.color),
+            u8::from(border.centered),
+        )?;
+        if border.style != LineStyle::Solid {
+            write!(f, ";style={}", border.style.name())?;
+        }
+        if border.priority != 0 {
+            write!(f, ";priority={}", border.priority.min(15))?;
+        }
+        f.write_str("\x1b\\")
+    }
+
+    #[cfg(windows)]
+    fn execute_winapi(&self) -> io::Result<()> {
+        Ok(())
+    }
+}
+
+/// A command that sets which joints of the cell border protocol pen are rounded.
+///
+/// Joints are separate from the pen's segments: `pen-clear` leaves them alone, so the joints not
+/// in the set are squared explicitly. The colour, if any, fills rounded corner cells outside
+/// their arcs, and the radius, if any, sets their size in 1/256 of the cell width. Terminals that
+/// don't support the protocol ignore it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SetCellBorderJoints(pub BorderJoints, pub Option<Color>, pub Option<u16>);
+
+impl crossterm::Command for SetCellBorderJoints {
+    fn write_ansi(&self, f: &mut impl core::fmt::Write) -> core::fmt::Result {
+        let rounded = self.0.bits();
+        let square = !rounded;
+        if square != 0 {
+            write!(f, "\x1bP1+bcell-border;pen-square;{square}\x1b\\")?;
+        }
+        if rounded == 0 {
+            return Ok(());
+        }
+        write!(f, "\x1bP1+bcell-border;pen-round;{rounded}")?;
+        match self.1 {
+            Some(Color::Reset) => f.write_str(";outside=default")?,
+            Some(color) => write!(f, ";outside={}", BorderColor(color))?,
+            None => {}
+        }
+        if let Some(radius) = self.2 {
+            write!(f, ";radius={}", radius.clamp(1, 256))?;
+        }
+        f.write_str("\x1b\\")
+    }
+
+    #[cfg(windows)]
+    fn execute_winapi(&self) -> io::Result<()> {
+        Ok(())
+    }
+}
+
+/// Formats a [`Color`] as a cell border protocol `COLOR` field.
+struct BorderColor(Color);
+
+impl core::fmt::Display for BorderColor {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let index = match self.0 {
+            Color::Reset => return f.write_str("fg"),
+            Color::Rgb(r, g, b) => return write!(f, "{r:02x}{g:02x}{b:02x}"),
+            Color::Indexed(i) => i,
+            Color::Black => 0,
+            Color::Red => 1,
+            Color::Green => 2,
+            Color::Yellow => 3,
+            Color::Blue => 4,
+            Color::Magenta => 5,
+            Color::Cyan => 6,
+            Color::Gray => 7,
+            Color::DarkGray => 8,
+            Color::LightRed => 9,
+            Color::LightGreen => 10,
+            Color::LightYellow => 11,
+            Color::LightBlue => 12,
+            Color::LightMagenta => 13,
+            Color::LightCyan => 14,
+            Color::White => 15,
+        };
+        write!(f, "p{index}")
+    }
+}
+
 impl<W> Backend for CrosstermBackend<W>
 where
     W: Write,
@@ -242,6 +349,8 @@ where
         #[cfg(feature = "underline-color")]
         let mut underline_color = Color::Reset;
         let mut modifier = Modifier::empty();
+        let mut border = CellBorder::NONE;
+        let mut joints = (BorderJoints::empty(), None, None);
         // Position and width of the last cell written, used to skip redundant cursor moves.
         let mut last: Option<(Position, u16)> = None;
         for (x, y, cell) in content {
@@ -280,7 +389,29 @@ where
                 underline_color = cell.underline_color;
             }
 
+            if cell.border != border {
+                queue!(self.writer, SetCellBorderPen(cell.border))?;
+                border = cell.border;
+            }
+            let cell_joints = (cell.border.rounded, cell.border.outside, cell.border.radius);
+            if cell_joints != joints {
+                let (rounded, outside, radius) = cell_joints;
+                queue!(self.writer, SetCellBorderJoints(rounded, outside, radius))?;
+                joints = cell_joints;
+            }
+
             queue!(self.writer, Print(cell.symbol()))?;
+        }
+
+        // Later writes and erases outside of `draw` must not pick up the pen.
+        if !border.is_empty() {
+            queue!(self.writer, SetCellBorderPen(CellBorder::NONE))?;
+        }
+        if !joints.0.is_empty() {
+            queue!(
+                self.writer,
+                SetCellBorderJoints(BorderJoints::empty(), None, None)
+            )?;
         }
 
         #[cfg(feature = "underline-color")]
@@ -840,6 +971,65 @@ mod tests {
             output.contains(&move_to),
             "expected `MoveTo(1, 0)` after a wide glyph, got: {output:?}"
         );
+    }
+
+    #[test]
+    fn draw_sets_and_clears_border_pen() {
+        use ratatui_core::buffer::BorderSegments;
+        let mut a = Cell::new("a");
+        a.border = CellBorder::new(BorderSegments::TOP, Color::Rgb(255, 0, 16));
+        let b = a.clone();
+        let mut c = a.clone();
+        c.border.priority = 1;
+        let d = Cell::new("d");
+        let output = draw_to_string(&[(0, 0, &a), (1, 0, &b), (2, 0, &c), (3, 0, &d)]);
+        assert_eq!(
+            output
+                .matches("\x1bP1+bcell-border;pen;3;16;ff0010;1;1\x1b\\")
+                .count(),
+            1,
+            "{output:?}"
+        );
+        assert_eq!(
+            output
+                .matches("\x1bP1+bcell-border;pen;3;16;ff0010;1;1;priority=1\x1b\\")
+                .count(),
+            1,
+            "{output:?}"
+        );
+        assert_eq!(
+            output
+                .matches("\x1bP1+bcell-border;pen-clear;4095\x1b\\")
+                .count(),
+            1,
+            "{output:?}"
+        );
+    }
+
+    #[test]
+    fn draw_sends_border_style_and_joints() {
+        use ratatui_core::buffer::BorderSegments;
+        let mut corner = Cell::new("a");
+        corner.border = CellBorder {
+            style: LineStyle::Double,
+            rounded: BorderJoints::CORNER_TOP_LEFT,
+            outside: Some(Color::Reset),
+            radius: Some(96),
+            ..CellBorder::new(
+                BorderSegments::TOP | BorderSegments::LEFT,
+                Color::Indexed(2),
+            )
+        };
+        let mut edge = corner.clone();
+        edge.border.segments = BorderSegments::TOP;
+        let output = draw_to_string(&[(0, 0, &corner), (1, 0, &edge)]);
+        let pen = "\x1bP1+bcell-border;pen;195;16;p2;1;1;style=double\x1b\\";
+        assert_eq!(output.matches(pen).count(), 1, "{output:?}");
+        let round = "\x1bP1+bcell-border;pen-round;1;outside=default;radius=96\x1b\\";
+        assert_eq!(output.matches(round).count(), 1, "{output:?}");
+        // The joints reset once at the end of the draw, not between the two cells.
+        let reset = "\x1bP1+bcell-border;pen-square;255\x1b\\";
+        assert_eq!(output.matches(reset).count(), 1, "{output:?}");
     }
 
     #[test]
