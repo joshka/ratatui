@@ -18,6 +18,25 @@ It is a prototype for discussion, not a proposal for Ratatui's API.
     draggable, tiling panes.
   - [`cell-border-top`](examples/apps/cell-border-top/README.md): a btop-style system monitor.
 
+## Screenshots
+
+A scripted tour of `tiling-panes` in the experimental Ghostty: dragging panes onto each other to
+split and swap them, menus, a dialog, the cell grid (`g`) and the box-drawing comparison (`b`):
+[tiling-panes-tour.mp4](assets/cell-borders/tiling-panes-tour.mp4).
+
+### Collapsed borders
+
+With `c` (or `TILING_PANES_COLLAPSED=1`), panes sit edge to edge with no outer border, and each
+pair of neighbours shares one line, with the lines crossing at the joints. With cell borders the
+shared line sits on the edge between two cells, so every pane keeps all of its columns and rows:
+
+![Collapsed borders drawn with the cell border protocol](assets/cell-borders/collapsed-cells.png)
+
+The same layout with box-drawing characters, where neighbouring panes overlap by a cell and merge
+their borders. Each pane gives up a row and a column to its border:
+
+![Collapsed borders drawn with box-drawing characters](assets/cell-borders/collapsed-boxes.png)
+
 ## Trying it
 
 The protocol is only implemented in an experimental Ghostty branch so far:
