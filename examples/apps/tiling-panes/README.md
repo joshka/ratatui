@@ -21,11 +21,15 @@ Keys:
 - right click: pane menu; `Esc` closes menus
 - `?`: about dialog
 - `b`: switch between cell borders and box drawing
+- `c`: collapse borders: panes sit edge to edge and neighbours share one line, with no outer
+  border
 - `g`: shade alternate cells, to show where the cell edges are
 - `o`: fill outside rounded corners (on by default when the terminal supports it)
 - `q`: quit
 
-Set `NO_CELL_BORDERS=1` to skip detection and use box-drawing characters.
+Set `NO_CELL_BORDERS=1` to skip detection and use box-drawing characters,
+`TILING_PANES_COLLAPSED=1` to start with collapsed borders, and `TILING_PANES_DEMO=1` to play a
+scripted tour that drives the mouse and keys, for recording videos.
 
 See [`CELL-BORDERS.md`](../../../CELL-BORDERS.md) for a terminal that supports the protocol.
 

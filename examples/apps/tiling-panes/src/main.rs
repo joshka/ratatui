@@ -16,6 +16,8 @@
 /// release.
 ///
 /// [`latest`]: https://github.com/ratatui/ratatui/tree/latest
+mod demo;
+
 use std::collections::HashMap;
 use std::io::{Read, Write};
 
@@ -26,8 +28,9 @@ use crossterm::event::{
 };
 use crossterm::execute;
 use ratatui::buffer::{BorderJoints, BorderSegments, Buffer, CellBorder, LineStyle};
-use ratatui::layout::{Alignment, Constraint, Direction, Layout, Margin, Position, Rect};
+use ratatui::layout::{Alignment, Constraint, Direction, Layout, Margin, Position, Rect, Spacing};
 use ratatui::style::{Color, Modifier, Style, Stylize};
+use ratatui::symbols::merge::MergeStrategy;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Clear, Paragraph, Widget, Wrap};
 use ratatui::{DefaultTerminal, Frame};
@@ -93,7 +96,7 @@ const MENUS: [(&str, &[&[Action]]); 3] = [
         "Pane",
         &[&[Action::SplitRight, Action::SplitDown], &[Action::Close]],
     ),
-    ("View", &[&[Action::ToggleBorders]]),
+    ("View", &[&[Action::ToggleBorders, Action::ToggleCollapsed]]),
     ("Help", &[&[Action::About], &[Action::Quit]]),
 ];
 
@@ -191,6 +194,7 @@ enum Action {
     SplitDown,
     Close,
     ToggleBorders,
+    ToggleCollapsed,
     About,
     Quit,
 }
@@ -202,6 +206,7 @@ impl Action {
             Self::SplitDown => "Split down",
             Self::Close => "Close pane",
             Self::ToggleBorders => "Toggle cell borders",
+            Self::ToggleCollapsed => "Collapse borders",
             Self::About => "About",
             Self::Quit => "Quit",
         }
@@ -213,6 +218,7 @@ impl Action {
             Self::SplitDown => "v",
             Self::Close => "x",
             Self::ToggleBorders => "b",
+            Self::ToggleCollapsed => "c",
             Self::About => "?",
             Self::Quit => "q",
         }
@@ -268,6 +274,8 @@ struct Borders {
     /// Whether rounded corners fill the part outside their arc. Needs the terminal's `outside`
     /// feature.
     round_outside: bool,
+    /// Panes sit edge to edge and share one line between neighbours, with no outer border.
+    collapsed: bool,
 }
 
 struct App {
@@ -281,8 +289,12 @@ struct App {
     borders: Borders,
     /// Shades alternate cells, to show that the lines sit on cell edges and take no cells.
     show_grid: bool,
+    /// Draws a pointer at the mouse position, for the scripted tour.
+    pointer: bool,
     /// Pane areas from the last render, used for hit testing.
     areas: Vec<(usize, Rect)>,
+    /// The area the panes tile, from the last render.
+    main: Rect,
     /// Clickable areas from the last render, topmost last.
     hits: Vec<(Rect, Hit)>,
     should_exit: bool,
@@ -305,12 +317,15 @@ impl App {
             drag: None,
             overlay: Overlay::None,
             hover: Position::default(),
+            pointer: false,
             borders: Borders {
                 enabled: cell_borders,
                 round_outside: false,
+                collapsed: std::env::var_os("TILING_PANES_COLLAPSED").is_some(),
             },
             show_grid: false,
             areas: Vec::new(),
+            main: Rect::default(),
             hits: Vec::new(),
             should_exit: false,
         }
@@ -318,9 +333,25 @@ impl App {
 
     fn run(mut self, terminal: &mut DefaultTerminal) -> Result<()> {
         execute!(std::io::stdout(), EnableMouseCapture)?;
+        let mut tour = std::env::var_os("TILING_PANES_DEMO")
+            .is_some()
+            .then(demo::Tour::new);
+        self.pointer = tour.is_some();
         while !self.should_exit {
             terminal.draw(|frame| self.render(frame))?;
-            self.handle_event(&event::read()?);
+            let Some(tour) = &mut tour else {
+                self.handle_event(&event::read()?);
+                continue;
+            };
+            // Play the tour, while still taking real input so it can be stopped with `q`.
+            match tour.next(&self) {
+                Ok(event) => self.handle_event(&event),
+                Err(wait) => {
+                    if event::poll(wait)? {
+                        self.handle_event(&event::read()?);
+                    }
+                }
+            }
         }
         execute!(std::io::stdout(), DisableMouseCapture)?;
         Ok(())
@@ -349,6 +380,7 @@ impl App {
             KeyCode::Char('v') => Action::SplitDown,
             KeyCode::Char('x') => Action::Close,
             KeyCode::Char('b') => Action::ToggleBorders,
+            KeyCode::Char('c') => Action::ToggleCollapsed,
             KeyCode::Char('o') => {
                 self.borders.round_outside = !self.borders.round_outside;
                 return;
@@ -370,6 +402,7 @@ impl App {
             Action::SplitDown => self.split_focused(Drop::Bottom),
             Action::Close => self.close_focused(),
             Action::ToggleBorders => self.borders.enabled = !self.borders.enabled,
+            Action::ToggleCollapsed => self.borders.collapsed = !self.borders.collapsed,
             Action::About => self.overlay = Overlay::About,
             Action::Quit => self.should_exit = true,
         }
@@ -534,12 +567,24 @@ impl App {
             Constraint::Fill(1),
             Constraint::Length(1),
         ])
-        .spacing(1)
+        .spacing(u16::from(!self.borders.collapsed))
         .areas(area);
         self.hits.clear();
         self.areas.clear();
-        let main = main.inner(Margin::new(2, 0));
-        self.root.layout(main, &mut self.areas);
+        let main = if self.borders.collapsed {
+            main
+        } else {
+            main.inner(Margin::new(2, 0))
+        };
+        self.main = main;
+        // Collapsed panes touch. With box drawing they overlap a cell, so neighbours share their
+        // border characters.
+        let spacing = match (self.borders.collapsed, self.borders.enabled) {
+            (false, _) => None,
+            (true, true) => Some(Spacing::Space(0)),
+            (true, false) => Some(Spacing::Overlap(1)),
+        };
+        self.root.layout(main, spacing.as_ref(), &mut self.areas);
 
         self.render_menu_bar(menu_bar, buf);
         for (pane, area) in self.areas.clone() {
@@ -563,6 +608,11 @@ impl App {
         }
         if self.show_grid {
             render_grid(area, buf);
+        }
+        if self.pointer
+            && let Some(cell) = buf.cell_mut(self.hover)
+        {
+            cell.set_symbol("↖").set_fg(Color::Rgb(255, 255, 255));
         }
     }
 
@@ -612,11 +662,20 @@ impl App {
         } else {
             stroke(mix(kind.accent(), BG, 0.6), THIN, 1)
         };
-        let inner = self.chrome(area, border, buf);
+        let inner = if self.borders.collapsed {
+            self.shared_chrome(area, border, buf)
+        } else {
+            self.chrome(area, border, buf)
+        };
         let [header, body] =
             Layout::vertical([Constraint::Length(1), Constraint::Fill(1)]).areas(inner);
         let tab = self.tabs.get(&pane).copied().unwrap_or(0);
-        self.render_tabs(pane, tab, header, border, buf);
+        // The tab strip's lines stay inside the pane even when the outline is shared.
+        let tab_line = CellBorder {
+            centered: false,
+            ..border
+        };
+        self.render_tabs(pane, tab, header, tab_line, buf);
         // The outline is inside the pane's cells, so keep content a column clear of it.
         let body = body.inner(Margin::new(1, 0));
         match kind {
@@ -978,7 +1037,7 @@ impl App {
     }
 
     fn render_about(&mut self, screen: Rect, buf: &mut Buffer) {
-        let area = screen.centered(Constraint::Length(50), Constraint::Length(11));
+        let area = screen.centered(Constraint::Length(68), Constraint::Length(10));
         render_shadow(area, buf);
         Clear.render(area, buf);
         buf.set_style(area, Style::new().bg(RAISED).fg(TEXT));
@@ -996,15 +1055,18 @@ impl App {
         self.edge(title, BorderSegments::BOTTOM, stroke(TEAL, THICK, 4), buf);
         Paragraph::new(vec![
             Line::from(""),
-            Line::from("Every line here sits on the edge of a cell, so the dialog,"),
-            Line::from("its buttons and the panes behind it lose no columns or rows."),
+            Line::from(
+                "Every line here sits on the edge of a cell, so the dialog, its buttons and \
+                 the panes behind it lose no columns or rows.",
+            ),
             Line::from(""),
             Line::from("Drawn with the cell border protocol.").fg(MUTED),
         ])
         .centered()
-        .render(body, buf);
+        .wrap(Wrap { trim: true })
+        .render(body.inner(Margin::new(2, 0)), buf);
         let ok =
-            Rect::new(buttons.right().saturating_sub(8), buttons.y, 6, 1).intersection(buttons);
+            Rect::new(buttons.right().saturating_sub(9), buttons.y, 6, 1).intersection(buttons);
         self.hits.push((ok, Hit::DialogOk));
         self.render_button(ok, "OK", TEAL, buf);
     }
@@ -1022,6 +1084,35 @@ impl App {
         let inner = block.inner(area);
         block.render(area, buf);
         inner
+    }
+
+    /// Draws a pane's border for the collapsed layout and returns the area inside it.
+    ///
+    /// With cell borders there's no outer border, and each inner edge is drawn centred on the
+    /// boundary between two panes. Both panes draw it, and the terminal merges the two into one
+    /// line, choosing the higher priority, so the focused pane's border wins. Lines meeting at a
+    /// corner form the joint. With box drawing, overlapping panes merge their border characters.
+    fn shared_chrome(&self, area: Rect, border: CellBorder, buf: &mut Buffer) -> Rect {
+        if !self.borders.enabled {
+            let block = Block::bordered()
+                .border_style(Style::new().fg(border.color))
+                .merge_borders(MergeStrategy::Exact);
+            let inner = block.inner(area);
+            block.render(area, buf);
+            return inner;
+        }
+        let main = self.main;
+        let mut sides = BorderSegments::empty();
+        sides.set(BorderSegments::LEFT, area.left() > main.left());
+        sides.set(BorderSegments::RIGHT, area.right() < main.right());
+        sides.set(BorderSegments::TOP, area.top() > main.top());
+        sides.set(BorderSegments::BOTTOM, area.bottom() < main.bottom());
+        let shared = CellBorder {
+            centered: true,
+            ..border
+        };
+        self.outline_sides(area, sides, shared, buf);
+        area
     }
 
     fn outline(&self, area: Rect, border: CellBorder, buf: &mut Buffer) {
@@ -1206,15 +1297,20 @@ const fn gap(direction: Direction) -> u16 {
 }
 
 impl Node {
-    fn layout(&self, area: Rect, out: &mut Vec<(usize, Rect)>) {
+    /// Lays out the panes, with `spacing` between them, or the usual gaps when it's `None`.
+    fn layout(&self, area: Rect, spacing: Option<&Spacing>, out: &mut Vec<(usize, Rect)>) {
         match self {
             Self::Pane(id) => out.push((*id, area)),
             Self::Split(direction, children) => {
                 let areas = Layout::new(*direction, children.iter().map(|_| Constraint::Fill(1)))
-                    .spacing(gap(*direction))
+                    .spacing(
+                        spacing
+                            .cloned()
+                            .unwrap_or_else(|| Spacing::Space(gap(*direction))),
+                    )
                     .split(area);
                 for (child, area) in children.iter().zip(areas.iter()) {
-                    child.layout(*area, out);
+                    child.layout(*area, spacing, out);
                 }
             }
         }
