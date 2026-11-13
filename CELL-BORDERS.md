@@ -21,8 +21,10 @@ It is a prototype for discussion, not a proposal for Ratatui's API.
 ## Screenshots
 
 A scripted tour of `tiling-panes` in the experimental Ghostty: dragging panes onto each other to
-split and swap them, menus, a dialog, the cell grid (`g`) and the box-drawing comparison (`b`):
-[tiling-panes-tour.mp4](assets/cell-borders/tiling-panes-tour.mp4).
+split and swap them, menus, a dialog, the cell grid (`g`) and the box-drawing comparison (`b`).
+There's also a sharper [MP4 version](assets/cell-borders/tiling-panes-tour.mp4) to download.
+
+![A scripted tour of the tiling-panes demo](assets/cell-borders/tiling-panes-tour.gif)
 
 ### Collapsed borders
 
